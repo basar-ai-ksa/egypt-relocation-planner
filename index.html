@@ -1,0 +1,2557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Cairo Relocation & Budget Planner | Family of Four</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <!-- Leaflet.js for Interactive Map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Outfit"', 'sans-serif'],
+          },
+          colors: {
+            cairo: {
+              50: '#FAF8F5',
+              100: '#F4EFE6',
+              200: '#E7DEC9',
+              500: '#B89758',
+              600: '#99783D',
+              700: '#7A5C28',
+              800: '#473617',
+              900: '#261C0A',
+            },
+            tealacc: {
+              50: '#F0FDFA',
+              100: '#CCFBF1',
+              500: '#0D9488',
+              600: '#0F766E',
+              700: '#115E59'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(226, 232, 240, 0.8);
+    }
+    .custom-range {
+      accent-color: #0D9488;
+    }
+    #commuteMap {
+      height: 540px;
+      width: 100%;
+      border-radius: 1.25rem;
+      z-index: 10;
+    }
+    .custom-poi-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 9999px;
+      color: white;
+      font-weight: 700;
+      font-size: 11px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+      border: 2px solid #ffffff;
+      transition: transform 0.2s ease;
+    }
+    .custom-poi-marker:hover {
+      transform: scale(1.15);
+      z-index: 1000 !important;
+    }
+    @media print {
+      .no-print { display: none !important; }
+      body { background: white !important; color: black !important; }
+      .glass-card { box-shadow: none !important; border: 1px solid #ddd !important; }
+    }
+  </style>
+</head>
+<body class="bg-cairo-50 text-slate-800 font-sans antialiased selection:bg-tealacc-500 selection:text-white">
+
+  <!-- Top Sticky Header Navigation -->
+  <header class="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-tealacc-600 to-cairo-500 flex items-center justify-center text-white font-display font-bold text-xl shadow-md">
+          NC
+        </div>
+        <div>
+          <h1 class="font-display font-bold text-lg text-slate-900 tracking-tight leading-none">New Cairo Relocation Planner</h1>
+          <span class="text-xs text-slate-500 font-medium">Départ Riyad (RUH ➔ CAI) • Famille de 4 • 6–12 Mois</span>
+        </div>
+      </div>
+
+      <!-- Currency Mode Selector: SAR / EGP / BOTH -->
+      <div class="flex items-center space-x-2 sm:space-x-4">
+        <div class="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200 shadow-inner">
+          <span class="text-[10px] sm:text-xs font-bold text-slate-400 uppercase px-2 hidden sm:inline">Devise :</span>
+          <button onclick="setCurrencyMode('SAR')" id="btn-curr-SAR" class="px-3 py-1 text-xs font-bold rounded-lg transition-all bg-white text-slate-900 shadow-sm">SAR</button>
+          <button onclick="setCurrencyMode('EGP')" id="btn-curr-EGP" class="px-3 py-1 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900">EGP</button>
+          <button onclick="setCurrencyMode('BOTH')" id="btn-curr-BOTH" class="px-3 py-1 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900">Both (SAR / EGP)</button>
+        </div>
+
+        <button onclick="window.print()" class="hidden md:inline-flex items-center px-3 py-1.5 border border-slate-300 rounded-lg text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 transition shadow-sm">
+          <svg class="w-4 h-4 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4H7v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+          Export Summary
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="relative overflow-hidden bg-gradient-to-b from-white to-cairo-100/60 pt-8 pb-12 border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        
+        <div class="lg:col-span-7 space-y-4">
+          <div class="inline-flex items-center space-x-2 px-3 py-1 bg-tealacc-50 border border-tealacc-200/60 rounded-full text-tealacc-600 text-xs font-semibold">
+            <span class="w-2 h-2 rounded-full bg-tealacc-500 animate-pulse"></span>
+            <span>Target Envelope: <strong id="hero-envelope-text">15,000 – 20,000 SAR / Month</strong></span>
+          </div>
+
+          <h1 class="text-3xl sm:text-4xl lg:text-5xl font-display font-extrabold text-slate-900 tracking-tight leading-tight">
+            Live Comfortably in New Cairo with Your Family
+          </h1>
+          
+          <p class="text-base sm:text-lg text-slate-600 leading-relaxed">
+            Tailored financial blueprint for two adults and two children (ages 8 & 10). Includes interactive schooling comparisons, compound choices, Arabic language tutoring, and a live commute distance & time map.
+          </p>
+
+          <!-- Interactive Budget Slider Widget -->
+          <div class="glass-card p-5 rounded-2xl shadow-sm border border-slate-200 space-y-3">
+            <div class="flex justify-between items-center">
+              <div>
+                <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Your Monthly Budget Ceiling</label>
+                <div class="text-2xl font-display font-black text-slate-900" id="display-target-budget">15,000 SAR</div>
+              </div>
+              <div class="text-right">
+                <span class="text-xs font-bold text-slate-500">Monthly Envelope Mode</span>
+                <div class="text-base font-bold text-tealacc-600" id="display-target-sub">Baseline Target</div>
+              </div>
+            </div>
+
+            <input type="range" id="budgetRange" min="12000" max="25000" step="500" value="15000" oninput="updateBudgetSlider(this.value)" class="w-full h-2 bg-slate-200 rounded-lg custom-range cursor-pointer">
+            
+            <div class="flex justify-between text-[11px] font-semibold text-slate-400">
+              <span id="slider-tick-12k">12,000 SAR</span>
+              <span class="text-tealacc-600 font-bold" id="slider-tick-15k">15,000 SAR (Target)</span>
+              <span class="text-cairo-600 font-bold" id="slider-tick-20k">20,000 SAR (Upper Cap)</span>
+              <span id="slider-tick-25k">25,000 SAR</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Live Financial Summary Card -->
+        <div class="lg:col-span-5">
+          <div class="glass-card p-6 rounded-3xl shadow-xl border border-slate-200/90 relative overflow-hidden bg-white">
+            <div class="absolute -top-12 -right-12 w-40 h-40 bg-tealacc-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div class="flex justify-between items-start mb-4">
+              <div>
+                <span class="text-xs font-bold uppercase tracking-widest text-slate-400">Current Package Cost</span>
+                <div class="text-3xl font-display font-black text-slate-900 mt-1" id="pkg-total-monthly">15,000 SAR</div>
+                <div class="text-xs text-slate-500 font-medium" id="pkg-total-sub">All-inclusive monthly burn</div>
+              </div>
+              <!-- Status Badge -->
+              <div id="budget-status-pill" class="px-3 py-1.5 rounded-xl font-bold text-xs flex items-center space-x-1.5 bg-emerald-100 text-emerald-800 border border-emerald-200">
+                <svg class="w-4 h-4 text-emerald-600" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path></svg>
+                <span id="budget-status-text">Within Budget</span>
+              </div>
+            </div>
+
+            <!-- Budget Utilization Progress Bar -->
+            <div class="space-y-1 mb-5">
+              <div class="flex justify-between text-xs font-semibold text-slate-600">
+                <span>Budget Allocation</span>
+                <span id="budget-util-pct">99.5%</span>
+              </div>
+              <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                <div id="budget-progress-bar" class="h-full bg-tealacc-500 rounded-full transition-all duration-300" style="width: 99.5%;"></div>
+              </div>
+              <div class="flex justify-between text-[11px] text-slate-500 pt-0.5">
+                <span id="pkg-surplus-label">Remaining buffer: <strong class="text-emerald-700" id="pkg-surplus-val">+150 SAR</strong></span>
+                <span id="duration-toggle-text">Stay: 12 Months</span>
+              </div>
+            </div>
+
+            <!-- Mini Breakdown Grid -->
+            <div class="grid grid-cols-2 gap-2.5 pt-3 border-t border-slate-100 text-xs">
+              <div class="p-2.5 bg-slate-50 rounded-xl">
+                <span class="text-slate-400 block font-medium">Compound Rent</span>
+                <span class="font-bold text-slate-800" id="stat-rent">4,166 SAR</span>
+              </div>
+              <div class="p-2.5 bg-slate-50 rounded-xl">
+                <span class="text-slate-400 block font-medium">Schooling (2 Kids)</span>
+                <span class="font-bold text-slate-800" id="stat-school">3,181 SAR</span>
+              </div>
+              <div class="p-2.5 bg-slate-50 rounded-xl">
+                <span class="text-slate-400 block font-medium">Arabic In-Home Tutor</span>
+                <span class="font-bold text-tealacc-600" id="stat-arabic">455 SAR</span>
+              </div>
+              <div class="p-2.5 bg-slate-50 rounded-xl">
+                <span class="text-slate-400 block font-medium">Car Rental & Fuel</span>
+                <span class="font-bold text-slate-800" id="stat-mobility">2,500 SAR</span>
+              </div>
+            </div>
+
+            <!-- Stay Duration Selector -->
+            <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-600">Horizon:</span>
+              <div class="inline-flex rounded-lg bg-slate-100 p-0.5 border border-slate-200">
+                <button onclick="setDuration(6)" id="btn-dur-6" class="px-3 py-1 text-xs font-bold rounded-md transition text-slate-600 hover:text-slate-900">6 Months</button>
+                <button onclick="setDuration(12)" id="btn-dur-12" class="px-3 py-1 text-xs font-bold rounded-md transition bg-white text-slate-900 shadow-sm">12 Months</button>
+              </div>
+              <div class="text-right">
+                <span class="text-[11px] text-slate-400 block">Total Est. Stay Outlay</span>
+                <span class="text-xs font-extrabold text-slate-900" id="total-stay-grand">212,400 SAR</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Area -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+
+    <!-- REFINED SECTION: Clean Map with POIs + Side Dashboard for Distances & Journey Times -->
+    <section id="map-section" class="glass-card rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md space-y-6">
+      
+      <!-- Section Header -->
+      <div class="flex flex-col md:flex-row md:items-end justify-between border-b border-slate-200 pb-4 gap-3">
+        <div>
+          <div class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-tealacc-100 text-tealacc-700 text-xs font-bold uppercase tracking-wider mb-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            Carte des Points d'Intérêt & Temps de Trajet
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-display font-extrabold text-slate-900">Distances & Temps de Trajet Moyens</h2>
+          <p class="text-xs sm:text-sm text-slate-500">Tous les POIs clés du Nouveau Caire sont visibles sur la carte. Consultez le tableau latéral pour les distances réelles et durées de trajet depuis votre logement.</p>
+        </div>
+
+        <!-- POI Category Legend -->
+        <div class="flex flex-wrap items-center gap-2 text-[11px] font-bold text-slate-600 bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200">
+          <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 mr-1.5"></span>Logements</span>
+          <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 mr-1.5"></span>Écoles</span>
+          <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-purple-500 mr-1.5"></span>Sport & Gym</span>
+          <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 mr-1.5"></span>Santé</span>
+          <span class="flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-amber-500 mr-1.5"></span>Commerces</span>
+        </div>
+      </div>
+
+      <!-- Main Layout: Side Travel Dashboard (Left) + Clean Map with All POIs (Right) -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- SIDE PANEL (outside of the map): All distances and typical journey times -->
+        <div class="lg:col-span-5 space-y-4">
+          
+          <!-- Origin Bar with Instant Housing Selector -->
+          <div class="p-4 bg-gradient-to-r from-emerald-50 to-tealacc-50 rounded-2xl border border-emerald-200/80 shadow-xs">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-emerald-800 flex items-center">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping mr-1.5"></span>
+                Point de Départ (Votre Logement)
+              </span>
+              <span class="text-[10px] font-bold text-slate-400">Mise à jour en direct</span>
+            </div>
+            <div class="flex items-center space-x-2">
+              <select id="activeHomeSelector" onchange="onHomeSelectorChange(this.value)" class="w-full text-xs font-bold bg-white border border-emerald-300 rounded-xl px-3 py-2 text-slate-800 focus:outline-none focus:ring-2 focus:ring-tealacc-500 shadow-xs">
+                <option value="mv_hydepark">Mountain View Hyde Park (Golden Square)</option>
+                <option value="mivida">Mivida Emaar (Rue 90 Sud)</option>
+                <option value="hydepark">Hyde Park New Cairo (Parc Central)</option>
+                <option value="palmhills">Palm Hills Katameya (Rue 90 Nord)</option>
+                <option value="rehab">Al Rehab City 2 (Route de Suez)</option>
+              </select>
+            </div>
+            <div class="text-[11px] text-slate-500 mt-1.5 flex items-center justify-between">
+              <span id="active-home-axis">Axe Mohamed Naguib / 90 Sud</span>
+              <button onclick="panMapTo('activeHome')" class="text-tealacc-700 font-bold hover:underline">Centrer sur la carte &rarr;</button>
+            </div>
+          </div>
+
+          <!-- POI Commute Cards List (Scrollable, elegant) -->
+          <div class="space-y-2.5 max-h-[420px] overflow-y-auto pr-1" id="commuteCardsContainer">
+            <!-- Dynamically populated via renderCommuteCards() -->
+          </div>
+
+          <!-- Point-to-Point Custom Quick Calculator (Collapsible / Compact) -->
+          <div class="p-3 bg-slate-50 rounded-2xl border border-slate-200 text-xs space-y-2">
+            <div class="flex justify-between items-center cursor-pointer" onclick="toggleCustomAtoB()">
+              <span class="font-bold text-slate-700 flex items-center">
+                <svg class="w-3.5 h-3.5 mr-1 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                Calculateur Personnalisé entre 2 Points (A ➔ B)
+              </span>
+              <span class="text-slate-400 text-[10px] font-bold" id="custom-toggle-indicator">[ + Ouvrir ]</span>
+            </div>
+
+            <div id="custom-atob-panel" class="hidden space-y-2 pt-2 border-t border-slate-200">
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Point A</label>
+                  <select id="customSelectA" onchange="calculateCustomAtoB()" class="w-full text-[11px] font-semibold bg-white border border-slate-300 rounded-lg p-1.5 text-slate-800"></select>
+                </div>
+                <div>
+                  <label class="block text-[10px] font-bold text-slate-500 uppercase mb-0.5">Point B</label>
+                  <select id="customSelectB" onchange="calculateCustomAtoB()" class="w-full text-[11px] font-semibold bg-white border border-slate-300 rounded-lg p-1.5 text-slate-800"></select>
+                </div>
+              </div>
+              <div class="p-2 bg-white rounded-xl border border-slate-200 flex justify-between items-center text-xs">
+                <span class="font-bold text-slate-700" id="custom-result-name">Sélectionnez 2 points</span>
+                <span class="font-extrabold text-tealacc-600" id="custom-result-metrics">-</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- MAP CONTAINER (outside side dashboard): Clean view of all POIs without cluttered journey lines -->
+        <div class="lg:col-span-7 space-y-2">
+          
+          <!-- Map View Switcher: Vue Satellite vs OpenStreetMap vs Carte Vectorielle -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-1 gap-1.5">
+            <span class="text-xs font-bold text-slate-500">Mode d'affichage de la carte :</span>
+            <div class="inline-flex flex-wrap rounded-xl bg-slate-100 p-1 border border-slate-200 gap-1">
+              <button onclick="switchMapView('satellite')" id="btn-map-sat" class="px-2.5 sm:px-3 py-1 text-xs font-bold rounded-lg transition-all bg-white text-slate-900 shadow-sm flex items-center">
+                <span class="w-2 h-2 rounded-full bg-blue-500 mr-1.5"></span>
+                🛰️ Vue Satellite
+              </button>
+              <button onclick="switchMapView('osm')" id="btn-map-osm" class="px-2.5 sm:px-3 py-1 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></span>
+                🌐 Plan Rues (OSM)
+              </button>
+              <button onclick="switchMapView('vector')" id="btn-map-vector" class="px-2.5 sm:px-3 py-1 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center">
+                <span class="w-2 h-2 rounded-full bg-tealacc-500 mr-1.5"></span>
+                🗺️ Schéma (Hors-Ligne)
+              </button>
+            </div>
+          </div>
+
+          <!-- Leaflet OpenStreetMap Container -->
+          <div id="commuteMap" class="shadow-sm border border-slate-200"></div>
+
+          <!-- Offline Vector SVG Map Container (100% Self-Contained) -->
+          <div id="offlineVectorMap" class="hidden shadow-sm border border-slate-200 rounded-2xl bg-slate-900 p-4 relative overflow-hidden" style="height: 540px;">
+            <div class="absolute top-3 left-3 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/10 text-white text-[11px] font-bold z-20 flex items-center space-x-2">
+              <span class="w-2 h-2 rounded-full bg-tealacc-400 animate-pulse"></span>
+              <span>Schéma Vectoriel du Nouveau Caire (100% Autonome / Hors-Ligne)</span>
+            </div>
+            <svg id="vectorMapSvg" viewBox="0 0 800 500" class="w-full h-full"></svg>
+          </div>
+          
+          <div class="flex items-center justify-between text-[11px] text-slate-500 mt-2 px-1">
+            <span>🗺️ Cliquez sur un repère pour voir ses détails et actualiser le tableau latéral.</span>
+            <span id="map-provider-footer" class="font-semibold text-slate-400">OpenStreetMap • Nouveau Caire</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Customizer Configuration Section -->
+    <section class="space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between border-b border-slate-200 pb-4 gap-2">
+        <div>
+          <div class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-tealacc-100 text-tealacc-700 text-xs font-bold uppercase tracking-wider mb-1">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path></svg>
+            Budget 100% Modulaire & Désélectionnable
+          </div>
+          <h2 class="text-2xl font-display font-bold text-slate-900">Personnalisez Votre Forfait Famille</h2>
+          <p class="text-sm text-slate-500">Cliquez sur un élément pour l'activer, ou recliquez dessus / choisissez "❌ Aucun" pour le retirer complètement du budget (0 SAR).</p>
+        </div>
+        <button onclick="resetDefaults()" class="text-xs font-semibold text-tealacc-600 hover:text-tealacc-700 underline self-start sm:self-auto">Réinitialiser (Base 15k SAR)</button>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+
+        <!-- Card 1: School Selection -->
+        <div class="glass-card rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between hover:border-tealacc-500/50 transition duration-200">
+          <div>
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-tealacc-600 flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 14l9-5-9-5-9 5 9 5z"></path><path d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path></svg>
+                École (2 Enfants)
+              </span>
+              <span class="text-xs font-bold text-slate-800" id="card-cost-school">3,181 SAR/mo</span>
+            </div>
+            
+            <div class="space-y-2">
+              <div onclick="toggleCategoryOption('school', 'lfc')" class="flex items-start p-2.5 rounded-xl border border-tealacc-500 bg-tealacc-50/40 cursor-pointer transition select-option" id="opt-school-lfc">
+                <input type="radio" name="schoolOption" value="lfc" checked class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900 flex items-center">
+                    Lycée Français (LFC)
+                    <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-emerald-100 text-emerald-800 font-bold">Top Valeur</span>
+                  </div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-school-lfc">AEFE. ~€4,528/an/enfant.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('school', 'malvern')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition select-option" id="opt-school-malvern">
+                <input type="radio" name="schoolOption" value="malvern" class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900">Malvern College Egypt</div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-school-malvern">British Primary (KS1-2).</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('school', 'mes')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition select-option" id="opt-school-mes">
+                <input type="radio" name="schoolOption" value="mes" class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900">MES Cairo</div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-school-mes">Programme British/US.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('school', 'none')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-rose-200 bg-slate-50/60 cursor-pointer transition select-option" id="opt-school-none">
+                <input type="radio" name="schoolOption" value="none" class="mt-0.5 text-slate-400 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-rose-700 flex items-center">
+                    ❌ Aucune école locale
+                    <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-bold">0 SAR</span>
+                  </div>
+                  <p class="text-slate-400 text-[11px] mt-0.5">CNED, payée par employeur ou homeschool.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Trajets sur la carte</span>
+            <a href="#schools-section" class="text-tealacc-600 font-semibold hover:underline">Campus &rarr;</a>
+          </div>
+        </div>
+
+        <!-- Card 2: Housing Selection (Strictly Furnished Benchmarks) -->
+        <div class="glass-card rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between hover:border-tealacc-500/50 transition duration-200">
+          <div>
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-tealacc-600 flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                Logement Meublé
+              </span>
+              <span class="text-xs font-bold text-slate-800" id="card-cost-housing">5,682 SAR/mo</span>
+            </div>
+
+            <div class="space-y-2">
+              <div onclick="toggleCategoryOption('housing', 'std')" class="flex items-start p-2.5 rounded-xl border border-tealacc-500 bg-tealacc-50/40 cursor-pointer transition select-option" id="opt-house-std">
+                <input type="radio" name="housingOption" value="std" checked class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900 flex items-center">
+                    Mountain View Hyde Park
+                    <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-tealacc-100 text-tealacc-800 font-bold">Conseillé</span>
+                  </div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-house-std">3 Ch. Meublé Confort. ~75,000 EGP/m.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('housing', 'lux')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition select-option" id="opt-house-lux">
+                <input type="radio" name="housingOption" value="lux" class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900">Emaar Mivida (Ultra-Lux)</div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-house-lux">Penthouse 3-4 Ch. Meublé. ~105,000 EGP/m.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('housing', 'town')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition select-option" id="opt-house-town">
+                <input type="radio" name="housingOption" value="town" class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900">Townhouse avec Jardin Privé</div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-house-town">Hyde Park / iCity. ~140,000 EGP/m.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('housing', 'value')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition select-option" id="opt-house-value">
+                <input type="radio" name="housingOption" value="value" class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900">Al Rehab City 2 (3 Ch.)</div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-house-value">Ville autonome, proche LFC. ~55,000 EGP/m.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('housing', 'none')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-rose-200 bg-slate-50/60 cursor-pointer transition select-option" id="opt-house-none">
+                <input type="radio" name="housingOption" value="none" class="mt-0.5 text-slate-400 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-rose-700 flex items-center">
+                    ❌ Aucun loyer / Hébergé
+                    <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-bold">0 SAR</span>
+                  </div>
+                  <p class="text-slate-400 text-[11px] mt-0.5">Famille, bien propre ou pris en charge.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Domicile sur la carte</span>
+            <a href="#compounds-section" class="text-tealacc-600 font-semibold hover:underline">Compounds &rarr;</a>
+          </div>
+        </div>
+
+        <!-- Card 3: Arabic Language Learning -->
+        <div class="glass-card rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between hover:border-tealacc-500/50 transition duration-200">
+          <div>
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-tealacc-600 flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                Langue Arabe
+              </span>
+              <span class="text-xs font-bold text-slate-800" id="card-cost-arabic">455 SAR/mo</span>
+            </div>
+
+            <div class="space-y-2">
+              <div onclick="toggleCategoryOption('arabic', 'home')" class="flex items-start p-2.5 rounded-xl border border-tealacc-500 bg-tealacc-50/40 cursor-pointer transition select-option" id="opt-arabic-home">
+                <input type="radio" name="arabicOption" value="home" checked class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900 flex items-center">
+                    Tuteur à Domicile (3x/sem)
+                    <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-tealacc-100 text-tealacc-800 font-bold">Idéal</span>
+                  </div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-arabic-home">Fusha + Coran enfants + dialecte. 0 trajet.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('arabic', 'inst')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition select-option" id="opt-arabic-inst">
+                <input type="radio" name="arabicOption" value="inst" class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900">Institut Présentiel (Diwan/Fajr)</div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-arabic-inst">Cours intensifs certifiants.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('arabic', 'online')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition select-option" id="opt-arabic-online">
+                <input type="radio" name="arabicOption" value="online" class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900">Cours Privés en Ligne</div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-arabic-online">1-on-1 flexible Al-Azhar.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('arabic', 'none')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-rose-200 bg-slate-50/60 cursor-pointer transition select-option" id="opt-arabic-none">
+                <input type="radio" name="arabicOption" value="none" class="mt-0.5 text-slate-400 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-rose-700 flex items-center">
+                    ❌ Aucun cours d'arabe
+                    <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-bold">0 SAR</span>
+                  </div>
+                  <p class="text-slate-400 text-[11px] mt-0.5">Pratique autonome en famille.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500">
+            Confort absolu à domicile
+          </div>
+        </div>
+
+        <!-- Card 4: Mobility & Transport -->
+        <div class="glass-card rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between hover:border-tealacc-500/50 transition duration-200">
+          <div>
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-tealacc-600 flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg>
+                Mobilité
+              </span>
+              <span class="text-xs font-bold text-slate-800" id="card-cost-mobility">2,500 SAR/mo</span>
+            </div>
+
+            <div class="space-y-2">
+              <div onclick="toggleCategoryOption('mobility', 'car')" class="flex items-start p-2.5 rounded-xl border border-tealacc-500 bg-tealacc-50/40 cursor-pointer transition select-option" id="opt-mob-car">
+                <input type="radio" name="mobilityOption" value="car" checked class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900 flex items-center">
+                    Voiture Location + Essence
+                    <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-tealacc-100 text-tealacc-800 font-bold">Liberté</span>
+                  </div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-mob-car">SUV compact (Toyota/MG) + carburant.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('mobility', 'uber')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition select-option" id="opt-mob-uber">
+                <input type="radio" name="mobilityOption" value="uber" class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900">Uber / Careem + Bus</div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-mob-uber">Courses quotidiennes + bus scolaire.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('mobility', 'none')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-rose-200 bg-slate-50/60 cursor-pointer transition select-option" id="opt-mob-none">
+                <input type="radio" name="mobilityOption" value="none" class="mt-0.5 text-slate-400 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-rose-700 flex items-center">
+                    ❌ Aucun transport payant
+                    <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-bold">0 SAR</span>
+                  </div>
+                  <p class="text-slate-400 text-[11px] mt-0.5">Véhicule déjà disponible sur place.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500 flex justify-between">
+            <span>Carburant : ~16 EGP/L</span>
+            <span class="font-semibold text-slate-700">Autonomie totale</span>
+          </div>
+        </div>
+
+        <!-- Card 5: Food & Restaurants -->
+        <div class="glass-card rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between hover:border-tealacc-500/50 transition duration-200">
+          <div>
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-tealacc-600 flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                Alimentation
+              </span>
+              <span class="text-xs font-bold text-slate-800" id="card-cost-food">2,613 SAR/mo</span>
+            </div>
+
+            <div class="space-y-2">
+              <div onclick="toggleCategoryOption('food', 'full')" class="flex items-start p-2.5 rounded-xl border border-tealacc-500 bg-tealacc-50/40 cursor-pointer transition select-option" id="opt-food-full">
+                <input type="radio" name="foodOption" value="full" checked class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900 flex items-center">
+                    Courses Seoudi + 1 Resto/sem
+                    <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-tealacc-100 text-tealacc-800 font-bold">Confort</span>
+                  </div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-food-full">Produits frais/importés + restos.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('food', 'groceries')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition select-option" id="opt-food-groceries">
+                <input type="radio" name="foodOption" value="groceries" class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900">Courses Seules (Sans restos)</div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-food-groceries">Seoudi / Carrefour.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('food', 'budget')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition select-option" id="opt-food-budget">
+                <input type="radio" name="foodOption" value="budget" class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900">Marchés Locaux Économiques</div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-food-budget">Primeurs locaux & hypermarché.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('food', 'none')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-rose-200 bg-slate-50/60 cursor-pointer transition select-option" id="opt-food-none">
+                <input type="radio" name="foodOption" value="none" class="mt-0.5 text-slate-400 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-rose-700 flex items-center">
+                    ❌ Non inclus
+                    <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-bold">0 SAR</span>
+                  </div>
+                  <p class="text-slate-400 text-[11px] mt-0.5">Budget alimentaire géré à part.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500">
+            Waterway, 5A, CFC Mall
+          </div>
+        </div>
+
+        <!-- Card 6: Sports & Gym -->
+        <div class="glass-card rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between hover:border-tealacc-500/50 transition duration-200">
+          <div>
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-tealacc-600 flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                Sports & Gym
+              </span>
+              <span class="text-xs font-bold text-slate-800" id="card-cost-sports">886 SAR/mo</span>
+            </div>
+
+            <div class="space-y-2">
+              <div onclick="toggleCategoryOption('lifestyle', 'full')" class="flex items-start p-2.5 rounded-xl border border-tealacc-500 bg-tealacc-50/40 cursor-pointer transition select-option" id="opt-lifestyle-full">
+                <input type="radio" name="lifestyleOption" value="full" checked class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900 flex items-center">
+                    Académies Kids + Gym Parents
+                    <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-tealacc-100 text-tealacc-800 font-bold">Complet</span>
+                  </div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-life-full">PSG Football + Gold's Gym non-mixte.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('lifestyle', 'sports')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition select-option" id="opt-lifestyle-sports">
+                <input type="radio" name="lifestyleOption" value="sports" class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900">Académies Enfants Seules</div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-life-sports">PSG Football / Smash Club (2 kids).</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('lifestyle', 'gym')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition select-option" id="opt-lifestyle-gym">
+                <input type="radio" name="lifestyleOption" value="gym" class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900">Gym Parents Non-Mixte Seul</div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-life-gym">Gold's Gym Concord Plaza.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('lifestyle', 'none')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-rose-200 bg-slate-50/60 cursor-pointer transition select-option" id="opt-lifestyle-none">
+                <input type="radio" name="lifestyleOption" value="none" class="mt-0.5 text-slate-400 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-rose-700 flex items-center">
+                    ❌ Aucun abonnement
+                    <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-bold">0 SAR</span>
+                  </div>
+                  <p class="text-slate-400 text-[11px] mt-0.5">Parcs du compound suffisants.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500">
+            Installations séparées femmes/hommes
+          </div>
+        </div>
+
+        <!-- Card 7: Domestic Help -->
+        <div class="glass-card rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between hover:border-tealacc-500/50 transition duration-200">
+          <div>
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-tealacc-600 flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                Aide Ménagère
+              </span>
+              <span class="text-xs font-bold text-slate-800" id="card-cost-help">492 SAR/mo</span>
+            </div>
+
+            <div class="space-y-2">
+              <div onclick="toggleCategoryOption('help', 'pt')" class="flex items-start p-2.5 rounded-xl border border-tealacc-500 bg-tealacc-50/40 cursor-pointer transition select-option" id="opt-help-pt">
+                <input type="radio" name="helpOption" value="pt" checked class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900 flex items-center">
+                    Aide Partielle (3j / sem)
+                    <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-tealacc-100 text-tealacc-800 font-bold">Populaire</span>
+                  </div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-help-pt">Ménage, linge, vaisselle.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('help', 'ft')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition select-option" id="opt-help-ft">
+                <input type="radio" name="helpOption" value="ft" class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900">Gouvernante Plein Temps</div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-help-ft">5j/sem, 8h/j. Repas & entretien.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('help', 'none')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-rose-200 bg-slate-50/60 cursor-pointer transition select-option" id="opt-help-none">
+                <input type="radio" name="helpOption" value="none" class="mt-0.5 text-slate-400 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-rose-700 flex items-center">
+                    ❌ Aucune aide ménagère
+                    <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-bold">0 SAR</span>
+                  </div>
+                  <p class="text-slate-400 text-[11px] mt-0.5">Gestion 100% autonome du foyer.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 pt-2.5 border-t border-slate-100 text-[11px] text-slate-500">
+            The Helpers Club Cairo
+          </div>
+        </div>
+
+        <!-- Card 8: Healthcare (Takaful) -->
+        <div class="glass-card rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col justify-between hover:border-tealacc-500/50 transition duration-200">
+          <div>
+            <div class="flex items-center justify-between mb-2.5">
+              <span class="text-xs font-bold uppercase tracking-wider text-tealacc-600 flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
+                Santé Takaful
+              </span>
+              <span class="text-xs font-bold text-slate-800" id="card-cost-health">606 SAR/mo</span>
+            </div>
+
+            <div class="space-y-2">
+              <div onclick="toggleCategoryOption('health', 'local')" class="flex items-start p-2.5 rounded-xl border border-tealacc-500 bg-tealacc-50/40 cursor-pointer transition select-option" id="opt-health-local">
+                <input type="radio" name="healthOption" value="local" checked class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900 flex items-center">
+                    Takaful Local (gig/Allianz)
+                    <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-tealacc-100 text-tealacc-800 font-bold">Sans Riba</span>
+                  </div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-health-local">Air Force Hosp, Cleopatra.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('health', 'global')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-slate-300 cursor-pointer transition select-option" id="opt-health-global">
+                <input type="radio" name="healthOption" value="global" class="mt-0.5 text-tealacc-600 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-slate-900">Police Expat Internationale</div>
+                  <p class="text-slate-500 text-[11px] mt-0.5" id="desc-opt-health-global">Évacuation médicale incluse.</p>
+                </div>
+              </div>
+
+              <div onclick="toggleCategoryOption('health', 'none')" class="flex items-start p-2.5 rounded-xl border border-slate-200 hover:border-rose-200 bg-slate-50/60 cursor-pointer transition select-option" id="opt-health-none">
+                <input type="radio" name="healthOption" value="none" class="mt-0.5 text-slate-400 pointer-events-none">
+                <div class="ml-2.5 text-xs">
+                  <div class="font-bold text-rose-700 flex items-center">
+                    ❌ Aucune assurance locale
+                    <span class="ml-1 px-1.5 py-0.2 rounded text-[9px] bg-rose-100 text-rose-800 font-bold">0 SAR</span>
+                  </div>
+                  <p class="text-slate-400 text-[11px] mt-0.5">Couverture déjà détenue à part.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-500">
+            <span>Air Force Hosp</span>
+            <a href="#health-section" class="text-tealacc-600 font-semibold hover:underline">Hôpitaux &rarr;</a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Visual Chart & Live Balance Sheet -->
+    <section class="glass-card rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        
+        <!-- Chart Canvas Column -->
+        <div class="lg:col-span-5 flex flex-col items-center justify-center">
+          <div class="w-full max-w-[280px] sm:max-w-[320px] relative">
+            <canvas id="budgetChart" width="320" height="320"></canvas>
+            <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+              <span class="text-xs uppercase font-bold text-slate-400">Total Mensuel</span>
+              <span class="text-xl sm:text-2xl font-display font-black text-slate-900" id="chart-center-val">15,000</span>
+              <span class="text-xs font-bold text-tealacc-600" id="chart-center-curr">SAR / mo</span>
+            </div>
+          </div>
+          <p class="text-xs text-slate-400 text-center mt-3">Répartition dynamique des dépenses mensuelles</p>
+        </div>
+
+        <!-- Breakdown Table Column -->
+        <div class="lg:col-span-7 space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="font-display font-bold text-xl text-slate-900">Bilan Budgétaire Détaillé</h3>
+            <span class="text-xs font-bold px-2.5 py-1 bg-cairo-100 text-cairo-800 rounded-md">Calcul Automatique</span>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs border-collapse">
+              <thead>
+                <tr class="border-b border-slate-200 text-slate-400 uppercase font-bold text-[10px]">
+                  <th class="py-2">Poste</th>
+                  <th class="py-2">Détail</th>
+                  <th class="py-2 text-right">Montant</th>
+                  <th class="py-2 text-right">% Budget</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100 text-slate-700">
+                <tr>
+                  <td class="py-2.5 font-bold flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-[#0D9488] mr-2"></span>Logement</td>
+                  <td class="py-2.5 text-slate-500" id="tbl-desc-housing">Appartement Meublé en Compound</td>
+                  <td class="py-2.5 font-bold text-right text-slate-900" id="tbl-val-housing">4,166 SAR</td>
+                  <td class="py-2.5 text-right font-medium text-slate-500" id="tbl-pct-housing">27.1%</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 font-bold flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-[#3B82F6] mr-2"></span>Scolarité (2 Enfants)</td>
+                  <td class="py-2.5 text-slate-500" id="tbl-desc-school">Lycée Français du Caire (Nouveau Caire)</td>
+                  <td class="py-2.5 font-bold text-right text-slate-900" id="tbl-val-school">3,181 SAR</td>
+                  <td class="py-2.5 text-right font-medium text-slate-500" id="tbl-pct-school">20.7%</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 font-bold flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-[#14B8A6] mr-2"></span>Langue Arabe</td>
+                  <td class="py-2.5 text-slate-500" id="tbl-desc-arabic">Tuteur Privé à Domicile (3x/semaine)</td>
+                  <td class="py-2.5 font-bold text-right text-tealacc-700 font-extrabold" id="tbl-val-arabic">455 SAR</td>
+                  <td class="py-2.5 text-right font-medium text-slate-500" id="tbl-pct-arabic">3.0%</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 font-bold flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-[#F59E0B] mr-2"></span>Transport & Mobilité</td>
+                  <td class="py-2.5 text-slate-500" id="tbl-desc-mobility">Voiture de Location + Essence</td>
+                  <td class="py-2.5 font-bold text-right text-slate-900" id="tbl-val-mobility">2,500 SAR</td>
+                  <td class="py-2.5 text-right font-medium text-slate-500" id="tbl-pct-mobility">16.3%</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 font-bold flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-[#10B981] mr-2"></span>Nourriture & Restaurants</td>
+                  <td class="py-2.5 text-slate-500">Courses Seoudi/Carrefour + 1 resto/sem</td>
+                  <td class="py-2.5 font-bold text-right text-slate-900" id="tbl-val-food">2,613 SAR</td>
+                  <td class="py-2.5 text-right font-medium text-slate-500" id="tbl-pct-food">17.0%</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 font-bold flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-[#8B5CF6] mr-2"></span>Sports & Salle de Sport</td>
+                  <td class="py-2.5 text-slate-500">Académies Enfants + Gym Non-Mixte</td>
+                  <td class="py-2.5 font-bold text-right text-slate-900" id="tbl-val-sports">885 SAR</td>
+                  <td class="py-2.5 text-right font-medium text-slate-500" id="tbl-pct-sports">5.8%</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 font-bold flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-[#EC4899] mr-2"></span>Aide Ménagère & Charges</td>
+                  <td class="py-2.5 text-slate-500" id="tbl-desc-help">Ménage partiel (3x/sem) + Électricité & Fibre</td>
+                  <td class="py-2.5 font-bold text-right text-slate-900" id="tbl-val-help">946 SAR</td>
+                  <td class="py-2.5 text-right font-medium text-slate-500" id="tbl-pct-help">6.2%</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 font-bold flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-[#64748B] mr-2"></span>Santé Takaful</td>
+                  <td class="py-2.5 text-slate-500" id="tbl-desc-health">Réseau Local Privé (Air Force Hospital)</td>
+                  <td class="py-2.5 font-bold text-right text-slate-900" id="tbl-val-health">606 SAR</td>
+                  <td class="py-2.5 text-right font-medium text-slate-500" id="tbl-pct-health">3.9%</td>
+                </tr>
+                <tr class="bg-slate-50 font-extrabold text-slate-900 text-sm">
+                  <td colspan="2" class="py-3 px-2">Total Mensuel Estimé</td>
+                  <td class="py-3 text-right text-tealacc-600" id="tbl-grand-total">15,352 SAR</td>
+                  <td class="py-3 text-right text-slate-700" id="tbl-grand-pct">100.0%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Visual Explorer: Gated Communities -->
+    <section id="compounds-section" class="space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between border-b border-slate-200 pb-4">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-tealacc-600">Explorateur Immobilier Meublé (Sources : Property Finder & Nawy 2026)</span>
+          <h2 class="text-2xl font-display font-bold text-slate-900">Compounds Résidentiels Sécurisés</h2>
+        </div>
+        <p class="text-xs text-slate-500 mt-1 sm:mt-0">Loyers réels constatés pour appartements et townhouses 100% meublés</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        
+        <!-- Mountain View Hyde Park -->
+        <div class="glass-card rounded-2xl overflow-hidden border-2 border-tealacc-500 shadow-sm hover:shadow-md transition group flex flex-col justify-between">
+          <div>
+            <div class="h-36 overflow-hidden relative">
+              <img src="https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=800&auto=format&fit=crop&q=80" alt="Mountain View Hyde Park" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+              <span class="absolute top-2.5 left-2.5 bg-tealacc-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">Top Choix Famille</span>
+            </div>
+            <div class="p-3.5 space-y-1.5">
+              <h4 class="font-display font-bold text-sm text-slate-900">Mountain View Hyde Park</h4>
+              <p class="text-[11px] text-slate-500">Parcs sans voitures, ponts piétons et aires de jeux sécurisées.</p>
+              <div class="pt-2 border-t border-slate-100 flex justify-between text-xs items-center">
+                <span class="text-slate-400">Loyer Meublé :</span>
+                <span class="font-extrabold text-tealacc-600" id="comp-price-mv">5,300 – 7,200 SAR/m</span>
+              </div>
+            </div>
+          </div>
+          <div class="p-3.5 pt-0">
+            <a href="https://www.propertyfinder.eg/en/rent/properties-for-rent-cairo-new-cairo-city-mountain-view-hyde-park.html" target="_blank" rel="noopener noreferrer" class="block text-center py-1.5 bg-tealacc-50 hover:bg-tealacc-100 text-tealacc-800 rounded-lg text-xs font-bold transition">Property Finder &nearr;</a>
+          </div>
+        </div>
+
+        <!-- Mivida (Emaar) -->
+        <div class="glass-card rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition group flex flex-col justify-between">
+          <div>
+            <div class="h-36 overflow-hidden relative">
+              <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&auto=format&fit=crop&q=80" alt="Mivida New Cairo" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+              <span class="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold text-slate-800">Emaar Misr</span>
+            </div>
+            <div class="p-3.5 space-y-1.5">
+              <h4 class="font-display font-bold text-sm text-slate-900">Mivida (Golden Square)</h4>
+              <p class="text-[11px] text-slate-500">Lacs, club-houses, finitions californiennes ultra-luxueuses.</p>
+              <div class="pt-2 border-t border-slate-100 flex justify-between text-xs items-center">
+                <span class="text-slate-400">Loyer Meublé :</span>
+                <span class="font-extrabold text-slate-900" id="comp-price-mivida">7,200 – 10,200 SAR/m</span>
+              </div>
+            </div>
+          </div>
+          <div class="p-3.5 pt-0">
+            <a href="https://www.propertyfinder.eg/en/rent/properties-for-rent-cairo-new-cairo-city-mivida.html" target="_blank" rel="noopener noreferrer" class="block text-center py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition">Property Finder &nearr;</a>
+          </div>
+        </div>
+
+        <!-- Hyde Park New Cairo -->
+        <div class="glass-card rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition group flex flex-col justify-between">
+          <div>
+            <div class="h-36 overflow-hidden relative">
+              <img src="https://images.unsplash.com/photo-1519331379826-f10be5486c6f?w=800&auto=format&fit=crop&q=80" alt="Hyde Park New Cairo" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+              <span class="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold text-slate-800">Hyde Park</span>
+            </div>
+            <div class="p-3.5 space-y-1.5">
+              <h4 class="font-display font-bold text-sm text-slate-900">Hyde Park (90 Sud)</h4>
+              <p class="text-[11px] text-slate-500">Parc géant de 141 feddans, club sportif et townhouses avec jardin.</p>
+              <div class="pt-2 border-t border-slate-100 flex justify-between text-xs items-center">
+                <span class="text-slate-400">Loyer Meublé :</span>
+                <span class="font-extrabold text-slate-900" id="comp-price-hyde">5,680 – 8,330 SAR/m</span>
+              </div>
+            </div>
+          </div>
+          <div class="p-3.5 pt-0">
+            <a href="https://www.propertyfinder.eg/en/rent/properties-for-rent-cairo-new-cairo-city-hyde-park.html" target="_blank" rel="noopener noreferrer" class="block text-center py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition">Property Finder &nearr;</a>
+          </div>
+        </div>
+
+        <!-- Palm Hills Katameya -->
+        <div class="glass-card rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition group flex flex-col justify-between">
+          <div>
+            <div class="h-36 overflow-hidden relative">
+              <img src="https://images.unsplash.com/photo-1572252009286-268acec5ca0a?w=800&auto=format&fit=crop&q=80" alt="Palm Hills Katameya" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+              <span class="absolute top-2.5 left-2.5 bg-white/90 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold text-slate-800">Palm Hills</span>
+            </div>
+            <div class="p-3.5 space-y-1.5">
+              <h4 class="font-display font-bold text-sm text-slate-900">Palm Hills Katameya</h4>
+              <p class="text-[11px] text-slate-500">Végétation abondante, calme et proximité directe du Lycée Français.</p>
+              <div class="pt-2 border-t border-slate-100 flex justify-between text-xs items-center">
+                <span class="text-slate-400">Loyer Meublé :</span>
+                <span class="font-extrabold text-slate-900" id="comp-price-palmhills">5,680 – 8,330 SAR/m</span>
+              </div>
+            </div>
+          </div>
+          <div class="p-3.5 pt-0">
+            <a href="https://www.propertyfinder.eg/en/rent/properties-for-rent-cairo-new-cairo-city-palm-hills-katameya.html" target="_blank" rel="noopener noreferrer" class="block text-center py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition">Property Finder &nearr;</a>
+          </div>
+        </div>
+
+        <!-- Al Rehab City 2 -->
+        <div class="glass-card rounded-2xl overflow-hidden border border-slate-200 shadow-sm hover:shadow-md transition group flex flex-col justify-between">
+          <div>
+            <div class="h-36 overflow-hidden relative">
+              <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&auto=format&fit=crop&q=80" alt="Al Rehab City" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+              <span class="absolute top-2.5 left-2.5 bg-emerald-600 text-white px-2 py-0.5 rounded text-[10px] font-bold">Top Économies</span>
+            </div>
+            <div class="p-3.5 space-y-1.5">
+              <h4 class="font-display font-bold text-sm text-slate-900">Al Rehab City 2</h4>
+              <p class="text-[11px] text-slate-500">Ville fermée complète avec centres commerciaux, à 8 min du Lycée Français.</p>
+              <div class="pt-2 border-t border-slate-100 flex justify-between text-xs items-center">
+                <span class="text-slate-400">Loyer Meublé :</span>
+                <span class="font-extrabold text-emerald-700" id="comp-price-rehab">3,800 – 4,900 SAR/m</span>
+              </div>
+            </div>
+          </div>
+          <div class="p-3.5 pt-0">
+            <a href="https://www.propertyfinder.eg/en/rent/properties-for-rent-cairo-new-cairo-city-al-rehab.html" target="_blank" rel="noopener noreferrer" class="block text-center py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold transition">Property Finder &nearr;</a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Visual Explorer: Schools Comparison -->
+    <section id="schools-section" class="space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-end justify-between border-b border-slate-200 pb-4">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-tealacc-600">Établissements Scolaires</span>
+          <h2 class="text-2xl font-display font-bold text-slate-900">Écoles Internationales (8 & 10 ans)</h2>
+        </div>
+        <p class="text-xs text-slate-500">Programmes officiels français (AEFE) et britanniques au Nouveau Caire</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- LFC Card -->
+        <div class="glass-card rounded-2xl p-5 border-2 border-tealacc-500/70 shadow-md relative overflow-hidden flex flex-col justify-between">
+          <div class="absolute top-0 right-0 bg-tealacc-500 text-white text-[10px] font-extrabold uppercase px-3 py-1 rounded-bl-lg">
+            Meilleur Choix & Économies
+          </div>
+          <div class="space-y-3">
+            <div class="h-36 rounded-xl overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&auto=format&fit=crop&q=80" alt="LFC Classroom" class="w-full h-full object-cover">
+            </div>
+            <div>
+              <span class="text-xs font-bold text-tealacc-600 uppercase">Filière Française AEFE</span>
+              <h4 class="font-display font-bold text-lg text-slate-900">Lycée Français du Caire (LFC)</h4>
+              <p class="text-xs text-slate-500 mt-1">Campus primaire du Nouveau Caire (Banafseg). Enseignement conforme aux programmes officiels de l'Éducation Nationale française.</p>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-xl space-y-1 text-xs">
+              <div class="flex justify-between"><span class="text-slate-500">Scolarité Primaire :</span> <strong class="text-slate-900" id="school-perchild-lfc">16,500 SAR / an / enfant</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">2 Enfants Total :</span> <strong class="text-tealacc-600" id="school-annual-lfc">33,000 SAR / an</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">Nationalité Française :</span> <span class="text-emerald-700 font-bold">Bourses AEFE éligibles</span></div>
+            </div>
+          </div>
+          <div class="pt-4 mt-2">
+            <a href="https://www.lfcaire.org" target="_blank" class="block text-center py-2 bg-tealacc-600 hover:bg-tealacc-700 text-white rounded-xl text-xs font-bold transition shadow-sm">
+              Portail Officiel LFC &rarr;
+            </a>
+          </div>
+        </div>
+
+        <!-- Malvern College Egypt -->
+        <div class="glass-card rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="h-36 rounded-xl overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&auto=format&fit=crop&q=80" alt="Malvern College Egypt" class="w-full h-full object-cover">
+            </div>
+            <div>
+              <span class="text-xs font-bold text-blue-600 uppercase">Filière Britannique</span>
+              <h4 class="font-display font-bold text-lg text-slate-900">Malvern College Egypt</h4>
+              <p class="text-xs text-slate-500 mt-1">Kattameya / Nouveau Caire. Partenariat avec l'institution britannique historique. Installations sportives et scientifiques de pointe.</p>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-xl space-y-1 text-xs">
+              <div class="flex justify-between"><span class="text-slate-500">Scolarité Primaire :</span> <strong class="text-slate-900" id="school-perchild-malvern">19,300 SAR / enfant</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">2 Enfants Total :</span> <strong class="text-blue-700" id="school-annual-malvern">38,600 SAR / an</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">Structure :</span> <span class="text-slate-700 font-semibold">UK Key Stages 1 & 2</span></div>
+            </div>
+          </div>
+          <div class="pt-4 mt-2">
+            <a href="https://malverncollege.edu.eg" target="_blank" class="block text-center py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition shadow-sm">
+              Visiter Malvern College &rarr;
+            </a>
+          </div>
+        </div>
+
+        <!-- Modern English School -->
+        <div class="glass-card rounded-2xl p-5 border border-slate-200 shadow-sm flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="h-36 rounded-xl overflow-hidden">
+              <img src="https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=800&auto=format&fit=crop&q=80" alt="MES Cairo" class="w-full h-full object-cover">
+            </div>
+            <div>
+              <span class="text-xs font-bold text-amber-600 uppercase">British & American</span>
+              <h4 class="font-display font-bold text-lg text-slate-900">Modern English School (MES)</h4>
+              <p class="text-xs text-slate-500 mt-1">South Academy, Nouveau Caire. Établissement très réputé, piscines, terrains de football et vie de communauté active.</p>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-xl space-y-1 text-xs">
+              <div class="flex justify-between"><span class="text-slate-500">Scolarité Primaire :</span> <strong class="text-slate-900" id="school-perchild-mes">17,800 SAR / enfant</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">2 Enfants Total :</span> <strong class="text-amber-700" id="school-annual-mes">35,600 SAR / an</strong></div>
+              <div class="flex justify-between"><span class="text-slate-500">Localisation :</span> <span class="text-slate-700 font-semibold">Centre Nouveau Caire</span></div>
+            </div>
+          </div>
+          <div class="pt-4 mt-2">
+            <a href="https://mescairo.com" target="_blank" class="block text-center py-2 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold transition shadow-sm">
+              Visiter MES Cairo &rarr;
+            </a>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Healthcare, Gym & Daily Living -->
+    <section id="health-section" class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      
+      <!-- Healthcare Card -->
+      <div class="glass-card rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-tealacc-100 flex items-center justify-center text-tealacc-600">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-lg text-slate-900">Santé Conforme à la Shariah</h3>
+            <span class="text-xs text-slate-500 font-medium">Assurance Coopérative Takaful en Égypte</span>
+          </div>
+        </div>
+
+        <div class="h-40 rounded-xl overflow-hidden">
+          <img src="https://images.unsplash.com/photo-1586773860418-d37222d8fce3?w=800&auto=format&fit=crop&q=80" alt="Hospital in Cairo" class="w-full h-full object-cover">
+        </div>
+
+        <p class="text-xs text-slate-600 leading-relaxed">
+          L'assurance Takaful est sans intérêt (<em>Riba</em>). Les leaders <strong>gig Takaful Égypte</strong> et <strong>Allianz Takaful</strong> ouvrent l'accès direct aux meilleurs hôpitaux privés du Nouveau Caire :
+        </p>
+
+        <ul class="text-xs space-y-2 text-slate-700">
+          <li class="flex items-center"><span class="w-1.5 h-1.5 rounded-full bg-tealacc-500 mr-2"></span><strong>Air Force Specialized Hospital :</strong> Rue 90 Nord (Urgences et pédiatrie de pointe).</li>
+          <li class="flex items-center"><span class="w-1.5 h-1.5 rounded-full bg-tealacc-500 mr-2"></span><strong>Hôpital Cleopatra Nouveau Caire :</strong> Consultations spécialistes et imagerie.</li>
+          <li class="flex items-center"><span class="w-1.5 h-1.5 rounded-full bg-tealacc-500 mr-2"></span><strong>Al Salam International Hospital :</strong> Cliniques internationales.</li>
+        </ul>
+
+        <div class="pt-3 border-t border-slate-100 flex justify-between text-xs items-center">
+          <span class="text-slate-400">Cotisation Annuelle Famille :</span>
+          <span class="font-bold text-tealacc-600" id="health-annual-total">5,682 – 8,333 SAR / an</span>
+        </div>
+      </div>
+
+      <!-- Sports & Fitness Card -->
+      <div class="glass-card rounded-3xl p-6 border border-slate-200 shadow-sm space-y-4">
+        <div class="flex items-center space-x-3">
+          <div class="w-10 h-10 rounded-xl bg-cairo-200/60 flex items-center justify-center text-cairo-800">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+          </div>
+          <div>
+            <h3 class="font-display font-bold text-lg text-slate-900">Académies Enfants & Salles Non-Mixtes</h3>
+            <span class="text-xs text-slate-500 font-medium">Développement Sportif & Bien-Être des Parents</span>
+          </div>
+        </div>
+
+        <div class="h-40 rounded-xl overflow-hidden">
+          <img src="https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&auto=format&fit=crop&q=80" alt="Gym & Fitness" class="w-full h-full object-cover">
+        </div>
+
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Le Nouveau Caire propose des académies de standard européen pour le football et la natation, ainsi que des clubs de fitness avec étages non-mixtes :
+        </p>
+
+        <ul class="text-xs space-y-2 text-slate-700">
+          <li class="flex items-center"><span class="w-1.5 h-1.5 rounded-full bg-cairo-600 mr-2"></span><strong>Académies Football PSG & Juventus :</strong> Entraînements professionnels UEFA pour 8 et 10 ans.</li>
+          <li class="flex items-center"><span class="w-1.5 h-1.5 rounded-full bg-cairo-600 mr-2"></span><strong>Gold's Gym Concord Plaza :</strong> Espace 100% réservé aux femmes + salle hommes séparée.</li>
+          <li class="flex items-center"><span class="w-1.5 h-1.5 rounded-full bg-cairo-600 mr-2"></span><strong>Clubs Smash & Platinum :</strong> Bassins olympiques de natation et courts de tennis.</li>
+        </ul>
+
+        <div class="pt-3 border-t border-slate-100 flex justify-between text-xs items-center">
+          <span class="text-slate-400">Budget Mensuel Activités :</span>
+          <span class="font-bold text-cairo-700" id="sports-monthly-total">886 SAR / mois</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- One-Time Relocation Setup Costs -->
+    <section class="glass-card rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-200 pb-4">
+        <div>
+          <span class="text-xs font-bold uppercase tracking-wider text-tealacc-600">Capital Initial d'Installation</span>
+          <h2 class="text-2xl font-display font-bold text-slate-900">Frais Ponctuels à l'Arrivée</h2>
+        </div>
+        <div class="text-xs font-bold text-slate-500 mt-2 sm:mt-0">
+          Total Installation : <span class="text-slate-900 text-sm font-extrabold" id="onetime-total-display">~33,500 SAR</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
+        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+          <span class="text-slate-400 block font-semibold">Billets Aller-Retour (4 pers.)</span>
+          <span class="font-extrabold text-base text-slate-900" id="onetime-flights">3,409 SAR</span>
+          <span class="text-slate-500 block text-[11px]">Riyad vers Le Caire (RUH ➔ CAI)</span>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+          <span class="text-slate-400 block font-semibold">Caution Bailleur (Remboursable)</span>
+          <span class="font-extrabold text-base text-slate-900" id="onetime-deposit">8,333 SAR</span>
+          <span class="text-slate-500 block text-[11px]">2 mois de loyer retenus</span>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+          <span class="text-slate-400 block font-semibold">Frais d'Agence Immobilière</span>
+          <span class="font-extrabold text-base text-slate-900" id="onetime-broker">4,166 SAR</span>
+          <span class="text-slate-500 block text-[11px]">Honoraires standard de 1 mois</span>
+        </div>
+        <div class="p-4 bg-slate-50 rounded-2xl border border-slate-100 space-y-1">
+          <span class="text-slate-400 block font-semibold">Droits Scolaires & Visas</span>
+          <span class="font-extrabold text-base text-slate-900" id="onetime-visas">11,500 SAR</span>
+          <span class="text-slate-500 block text-[11px]">Inscriptions + cartes de séjour</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Sources & Références Officielles des Tarifs -->
+    <section id="sources-section" class="glass-card rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-md space-y-6">
+      <div class="border-b border-slate-200 pb-4">
+        <div class="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-tealacc-100 text-tealacc-700 text-xs font-bold uppercase tracking-wider mb-1">
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+          Références Officielles 2026
+        </div>
+        <h2 class="text-2xl sm:text-3xl font-display font-extrabold text-slate-900">Références & Sources Officielles des Tarifs</h2>
+        <p class="text-xs sm:text-sm text-slate-500 mt-1">Tous les montants affichés dans cette application sont issus de barèmes officiels, grilles d'écolage publiées et portails immobiliers professionnels en direct.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- 1. Real Estate -->
+        <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+          <div class="flex items-center space-x-2">
+            <span class="p-2 rounded-xl bg-emerald-100 text-emerald-800 text-sm font-bold">🏠</span>
+            <div>
+              <h4 class="font-bold text-sm text-slate-900">Immobilier & Loyers Meublés</h4>
+              <span class="text-[11px] text-slate-400">Nouveau Caire (5ème Règlement)</span>
+            </div>
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Tarifs calibrés sur les annonces actives d'appartements et townhouses <strong>entièrement meublés</strong> au sein des compounds fermés (Mivida, Mountain View, Hyde Park, Palm Hills, Rehab).
+          </p>
+          <ul class="text-xs space-y-1.5 text-slate-700 pt-2 border-t border-slate-200">
+            <li class="flex items-center justify-between">
+              <span class="font-medium">Property Finder Egypt :</span>
+              <a href="https://www.propertyfinder.eg/en/rent/properties-for-rent-cairo-new-cairo-city.html" target="_blank" rel="noopener noreferrer" class="text-tealacc-600 font-bold hover:underline flex items-center">propertyfinder.eg &nearr;</a>
+            </li>
+            <li class="flex items-center justify-between">
+              <span class="font-medium">Nawy Real Estate :</span>
+              <a href="https://www.nawy.com.eg" target="_blank" rel="noopener noreferrer" class="text-tealacc-600 font-bold hover:underline flex items-center">nawy.com.eg &nearr;</a>
+            </li>
+            <li class="flex items-center justify-between">
+              <span class="font-medium">Aqarmap Égypte :</span>
+              <a href="https://egypt.aqarmap.com" target="_blank" rel="noopener noreferrer" class="text-tealacc-600 font-bold hover:underline flex items-center">aqarmap.com &nearr;</a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 2. Schools -->
+        <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+          <div class="flex items-center space-x-2">
+            <span class="p-2 rounded-xl bg-blue-100 text-blue-800 text-sm font-bold">🎓</span>
+            <div>
+              <h4 class="font-bold text-sm text-slate-900">Établissements Scolaires</h4>
+              <span class="text-[11px] text-slate-400">Homologués AEFE & British/US</span>
+            </div>
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Frais d'écolage annuels officiels pour le cycle primaire (enfants de 8 et 10 ans), incluant les droits de première inscription et fournitures.
+          </p>
+          <ul class="text-xs space-y-1.5 text-slate-700 pt-2 border-t border-slate-200">
+            <li class="flex items-center justify-between">
+              <span class="font-medium">Lycée Français (AEFE) :</span>
+              <a href="https://www.lfcaire.org" target="_blank" rel="noopener noreferrer" class="text-tealacc-600 font-bold hover:underline flex items-center">lfcaire.org &nearr;</a>
+            </li>
+            <li class="flex items-center justify-between">
+              <span class="font-medium">Malvern College Egypt :</span>
+              <a href="https://malverncollege.edu.eg" target="_blank" rel="noopener noreferrer" class="text-tealacc-600 font-bold hover:underline flex items-center">malverncollege.edu.eg &nearr;</a>
+            </li>
+            <li class="flex items-center justify-between">
+              <span class="font-medium">Modern English School :</span>
+              <a href="https://mescairo.com" target="_blank" rel="noopener noreferrer" class="text-tealacc-600 font-bold hover:underline flex items-center">mescairo.com &nearr;</a>
+            </li>
+            <li class="flex items-center justify-between">
+              <span class="font-medium">Consulat (Bourses AEFE) :</span>
+              <a href="https://eg.ambafrance.org" target="_blank" rel="noopener noreferrer" class="text-tealacc-600 font-bold hover:underline flex items-center">eg.ambafrance.org &nearr;</a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 3. Flights & Mobility -->
+        <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+          <div class="flex items-center space-x-2">
+            <span class="p-2 rounded-xl bg-amber-100 text-amber-800 text-sm font-bold">✈️</span>
+            <div>
+              <h4 class="font-bold text-sm text-slate-900">Vols & Transports</h4>
+              <span class="text-[11px] text-slate-400">Départ Riyad (RUH ➔ CAI)</span>
+            </div>
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Billetterie directe de Riyad vers Le Caire (4 passagers, 2x23kg par personne) et tarifs réels de location automobile mensuelle longue durée.
+          </p>
+          <ul class="text-xs space-y-1.5 text-slate-700 pt-2 border-t border-slate-200">
+            <li class="flex items-center justify-between">
+              <span class="font-medium">Saudia Airlines :</span>
+              <a href="https://www.saudia.com" target="_blank" rel="noopener noreferrer" class="text-tealacc-600 font-bold hover:underline flex items-center">saudia.com &nearr;</a>
+            </li>
+            <li class="flex items-center justify-between">
+              <span class="font-medium">Flynas :</span>
+              <a href="https://flynas.com" target="_blank" rel="noopener noreferrer" class="text-tealacc-600 font-bold hover:underline flex items-center">flynas.com &nearr;</a>
+            </li>
+            <li class="flex items-center justify-between">
+              <span class="font-medium">Avis Égypte Location :</span>
+              <a href="https://www.avis.com.eg" target="_blank" rel="noopener noreferrer" class="text-tealacc-600 font-bold hover:underline flex items-center">avis.com.eg &nearr;</a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 4. Healthcare (Takaful) -->
+        <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
+          <div class="flex items-center space-x-2">
+            <span class="p-2 rounded-xl bg-rose-100 text-rose-800 text-sm font-bold">🏥</span>
+            <div>
+              <h4 class="font-bold text-sm text-slate-900">Santé Conforme Shariah</h4>
+              <span class="text-[11px] text-slate-400">Assurances Coopératives Takaful</span>
+            </div>
+          </div>
+          <p class="text-xs text-slate-600 leading-relaxed">
+            Polices d'assurance santé islamique (sans intérêt / <em>Riba</em>) avec tiers payant direct dans les cliniques et hôpitaux privés du Nouveau Caire.
+          </p>
+          <ul class="text-xs space-y-1.5 text-slate-700 pt-2 border-t border-slate-200">
+            <li class="flex items-center justify-between">
+              <span class="font-medium">gig Takaful Égypte :</span>
+              <a href="https://www.gigtakaful.com.eg" target="_blank" rel="noopener noreferrer" class="text-tealacc-600 font-bold hover:underline flex items-center">gigtakaful.com.eg &nearr;</a>
+            </li>
+            <li class="flex items-center justify-between">
+              <span class="font-medium">Allianz Takaful Égypte :</span>
+              <a href="https://www.allianz.com.eg" target="_blank" rel="noopener noreferrer" class="text-tealacc-600 font-bold hover:underline flex items-center">allianz.com.eg &nearr;</a>
+            </li>
+            <li class="flex items-center justify-between">
+              <span class="font-medium">Air Force Hospital :</span>
+              <a href="http://www.afsh.com.eg" target="_blank" rel="noopener noreferrer" class="text-tealacc-600 font-bold hover:underline flex items-center">afsh.com.eg &nearr;</a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- 5. Arabic Tutoring & Domestic Staff -->
+        <div class="p-5 bg-slate-50 rounded-2xl border border-slate-200 space-y-3 lg:col-span-2">
+          <div class="flex items-center space-x-2">
+            <span class="p-2 rounded-xl bg-purple-100 text-purple-800 text-sm font-bold">📖</span>
+            <div>
+              <h4 class="font-bold text-sm text-slate-900">Langue Arabe, Sports & Prestations à Domicile</h4>
+              <span class="text-[11px] text-slate-400">Instituts de langue, clubs sportifs & aide ménagère déclarée</span>
+            </div>
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs text-slate-600">
+            <div>
+              <strong class="text-slate-800 block mb-1">Instituts de Langue Arabe :</strong>
+              <p>Cours particuliers Fusha et dialecte égyptien par des professeurs certifiés (Institut Al-Diwan & Centre Al-Fajr). Tarifs de 250 à 450 EGP / heure en présentiel ou en ligne.</p>
+            </div>
+            <div>
+              <strong class="text-slate-800 block mb-1">Aide Ménagère & Sports :</strong>
+              <p>Agences de confiance au Caire (<em>The Helpers Club</em>, <em>Maids Egypt</em>) pour du personnel vérifié avec pièce d'identité. Académies sportives européennes (PSG Academy, Smash Club).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-white border-t border-slate-200 py-8 no-print">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 space-y-2">
+      <p class="font-semibold text-slate-700">Guide de Relocalisation au Nouveau Caire • Conçu pour un budget de 15 000 à 20 000 SAR / mois</p>
+      <p>Calculs basés sur les barèmes réels 2026 : loyers meublés en compound, frais de scolarité AEFE et assurances Takaful.</p>
+    </div>
+  </footer>
+
+  <!-- Application Logic, Reactivity & Interactive Map Engine -->
+  <script>
+    // Rates baseline
+    const FX = {
+      SAR: 1,
+      EGP: 13.20,
+    };
+
+    // State
+    let currencyMode = 'SAR'; // 'SAR', 'EGP', 'BOTH'
+    let targetMonthlyBudgetSAR = 15000;
+    let stayDurationMonths = 12;
+
+    let selectedSchool = 'lfc';       // 'lfc', 'malvern', 'mes', 'none'
+    let selectedHousing = 'std';      // 'std', 'lux', 'town', 'value', 'none'
+    let selectedMobility = 'car';     // 'car', 'uber', 'none'
+    let selectedArabic = 'home';      // 'home', 'inst', 'online', 'none'
+    let selectedFood = 'full';        // 'full', 'groceries', 'budget', 'none'
+    let selectedLifestyle = 'full';   // 'full', 'sports', 'gym', 'none'
+    let selectedHelp = 'pt';          // 'pt', 'ft', 'none'
+    let selectedHealth = 'local';     // 'local', 'global', 'none'
+
+    // Active Home Key in Map Database
+    let activeHomeKey = 'mv_hydepark';
+
+    // Costs in EGP (Monthly Base) - Verified 2026 Property Finder & School Schedules
+    const COSTS_EGP = {
+      school: {
+        lfc: 42000,       // ~€9,050/yr for 2 kids = ~490,000 EGP / 12 = ~40,800 + margin
+        malvern: 48500,   // ~580k / 12
+        mes: 44000,       // ~530k / 12
+        none: 0
+      },
+      housing: {
+        std: 75000,       // Mountain View Hyde Park 3-bed modern furnished (Property Finder 2026)
+        lux: 105000,      // Emaar Mivida 3-4 bed ultra-lux furnished (Property Finder 2026)
+        town: 140000,     // Townhouse with private garden (Property Finder 2026)
+        value: 55000,     // Al Rehab 2 (3-bed modern furnished) (Property Finder 2026)
+        none: 0           // Logement autonome / 0 SAR
+      },
+      arabic: {
+        home: 6000,       // 3x/week in-home private tutor
+        inst: 8500,       // institute classes for family
+        online: 3500,     // online 1-on-1 tutoring
+        none: 0
+      },
+      mobility: {
+        car: 33000,       // 29k rental + 4k fuel
+        uber: 22000,      // 15k uber + 7k school bus equiv.
+        none: 0
+      },
+      food: {
+        full: 34500,      // Groceries 24k + dining 10.5k
+        groceries: 24000, // Seoudi/Carrefour only
+        budget: 16000,    // Local fresh markets
+        none: 0
+      },
+      lifestyle: {
+        full: 11700,      // Sports academies 7.2k + gym 4.5k
+        sports: 7200,     // Kids sports academies only
+        gym: 4500,        // Parents gym only
+        none: 0
+      },
+      help: {
+        pt: 6500,         // 3 days a week
+        ft: 13000,        // 5 days full-time
+        none: 0
+      },
+      health: {
+        local: 8000,      // ~96k/yr for family
+        global: 18000,    // ~216k/yr for family
+        none: 0
+      },
+      utilities: 6000     // electricity AC + high-speed fiber Wi-Fi
+    };
+
+    // One-time Setup in EGP (Departing from Riyadh RUH ➔ CAI)
+    const ONE_TIME_EGP = {
+      flights: 45000,    // ~3,409 SAR for 4 tickets (Saudia/Flynas/EgyptAir)
+      visas: 25000,
+      registration: {
+        lfc: 110000,
+        malvern: 70000,
+        mes: 55000,
+        none: 0
+      }
+    };
+
+    // Map POIs Database with Coordinates & Metadata
+    const MAP_LOCATIONS = {
+      // Compounds (Housing)
+      'mv_hydepark': { 
+        name: 'Mountain View Hyde Park', 
+        category: 'home', 
+        badge: 'Compound', 
+        lat: 30.0070, 
+        lng: 31.4720, 
+        color: '#10B981', 
+        iconChar: '🏠',
+        axis: 'Axe Mohamed Naguib / 90 Sud' 
+      },
+      'mivida': { 
+        name: 'Mivida (Emaar Misr)', 
+        category: 'home', 
+        badge: 'Compound', 
+        lat: 30.0125, 
+        lng: 31.4880, 
+        color: '#10B981', 
+        iconChar: '🏠',
+        axis: 'Rue 90 Sud / Golden Square' 
+      },
+      'hydepark': { 
+        name: 'Hyde Park New Cairo', 
+        category: 'home', 
+        badge: 'Compound', 
+        lat: 29.9980, 
+        lng: 31.4670, 
+        color: '#10B981', 
+        iconChar: '🏠',
+        axis: 'Rue 90 Sud / Middle Ring' 
+      },
+      'palmhills': { 
+        name: 'Palm Hills Katameya', 
+        category: 'home', 
+        badge: 'Compound', 
+        lat: 30.0150, 
+        lng: 31.4420, 
+        color: '#10B981', 
+        iconChar: '🏠',
+        axis: 'Rue 90 Nord' 
+      },
+      'rehab': { 
+        name: 'Al Rehab City 2', 
+        category: 'home', 
+        badge: 'Compound', 
+        lat: 30.0620, 
+        lng: 31.4930, 
+        color: '#10B981', 
+        iconChar: '🏠',
+        axis: 'Route de Suez / Proche LFC' 
+      },
+      
+      // Schools
+      'lfc': { 
+        name: 'Lycée Français du Caire (LFC)', 
+        category: 'school', 
+        badge: 'École AEFE', 
+        lat: 30.0460, 
+        lng: 31.4580, 
+        color: '#3B82F6', 
+        iconChar: '🎓',
+        axis: 'Quartier Banafseg 1' 
+      },
+      'malvern': { 
+        name: 'Malvern College Egypt', 
+        category: 'school', 
+        badge: 'École Brit.', 
+        lat: 29.9880, 
+        lng: 31.4050, 
+        color: '#3B82F6', 
+        iconChar: '🎓',
+        axis: 'Ring Road Sud / Kattameya' 
+      },
+      'mes': { 
+        name: 'Modern English School (MES)', 
+        category: 'school', 
+        badge: 'École Brit./US', 
+        lat: 30.0380, 
+        lng: 31.4330, 
+        color: '#3B82F6', 
+        iconChar: '🎓',
+        axis: 'South Academy' 
+      },
+      'ncbis': { 
+        name: 'NCBIS British School', 
+        category: 'school', 
+        badge: 'École Brit.', 
+        lat: 30.0180, 
+        lng: 31.4240, 
+        color: '#3B82F6', 
+        iconChar: '🎓',
+        axis: 'Choueifat' 
+      },
+
+      // Gym & Fitness
+      'golds_concord': { 
+        name: "Gold's Gym Concord Plaza", 
+        category: 'gym', 
+        badge: 'Salle Non-Mixte', 
+        lat: 30.0260, 
+        lng: 31.4680, 
+        color: '#8B5CF6', 
+        iconChar: '💪',
+        axis: 'Rue 90 Sud' 
+      },
+      'psg_academy': { 
+        name: 'Académie PSG Football / Smash Club', 
+        category: 'sports', 
+        badge: 'Sport Enfants', 
+        lat: 30.0480, 
+        lng: 31.4750, 
+        color: '#8B5CF6', 
+        iconChar: '⚽',
+        axis: 'Axe Mohamed Naguib' 
+      },
+
+      // Healthcare
+      'airforce_hosp': { 
+        name: 'Air Force Specialized Hospital', 
+        category: 'hospital', 
+        badge: 'Hôpital Privé', 
+        lat: 30.0270, 
+        lng: 31.4460, 
+        color: '#EF4444', 
+        iconChar: '🏥',
+        axis: 'Rue 90 Nord' 
+      },
+      'cleopatra_hosp': { 
+        name: 'Hôpital Cleopatra Nouveau Caire', 
+        category: 'hospital', 
+        badge: 'Clinique', 
+        lat: 30.0220, 
+        lng: 31.4350, 
+        color: '#EF4444', 
+        iconChar: '🏥',
+        axis: 'Centre Médical' 
+      },
+
+      // Groceries, Dining & Mosques
+      'seoudi_waterway': { 
+        name: 'Seoudi Supermarket / The Waterway', 
+        category: 'groceries', 
+        badge: 'Courses / Restos', 
+        lat: 30.0380, 
+        lng: 31.4750, 
+        color: '#F59E0B', 
+        iconChar: '🛒',
+        axis: 'Rue 90 Nord' 
+      },
+      'gourmet_5a': { 
+        name: 'Gourmet Market / 5A Waterway', 
+        category: 'groceries', 
+        badge: 'Épicerie Fine', 
+        lat: 30.0320, 
+        lng: 31.4310, 
+        color: '#F59E0B', 
+        iconChar: '🛒',
+        axis: 'Entrée Ring Road' 
+      },
+      'cfc_carrefour': { 
+        name: 'Cairo Festival City Mall (Carrefour)', 
+        category: 'groceries', 
+        badge: 'Centre Commercial', 
+        lat: 30.0310, 
+        lng: 31.4070, 
+        color: '#F59E0B', 
+        iconChar: '🛍️',
+        axis: 'Ring Road Est' 
+      },
+      'sharbatly_mosque': { 
+        name: 'Grande Mosquée Hassan El Sharbatly', 
+        category: 'mosque', 
+        badge: 'Mosquée Jumua', 
+        lat: 30.0420, 
+        lng: 31.4410, 
+        color: '#059669', 
+        iconChar: '🕌',
+        axis: 'Quartier Sud 7' 
+      }
+    };
+
+    // Instances
+    let budgetChartInstance = null;
+    let leafletMap = null;
+    let mapMarkers = {};
+
+    function formatNumber(num) {
+      return Math.round(num).toLocaleString('en-US');
+    }
+
+    // Unified Price Formatter across entire application
+    function formatMoney(amountSAR, isCompact = false) {
+      const sarVal = Math.round(amountSAR);
+      const egpVal = Math.round(amountSAR * FX.EGP);
+
+      if (currencyMode === 'SAR') {
+        return `${formatNumber(sarVal)} SAR`;
+      } else if (currencyMode === 'EGP') {
+        return `${formatNumber(egpVal)} EGP`;
+      } else { // 'BOTH'
+        if (isCompact) {
+          return `${formatNumber(sarVal)} SAR / ${formatNumber(egpVal)} EGP`;
+        }
+        return `${formatNumber(sarVal)} SAR (${formatNumber(egpVal)} EGP)`;
+      }
+    }
+
+    function formatRange(sarMin, sarMax, suffix = '') {
+      const egpMin = sarMin * FX.EGP;
+      const egpMax = sarMax * FX.EGP;
+
+      if (currencyMode === 'SAR') {
+        return `${formatNumber(sarMin)} – ${formatNumber(sarMax)} SAR${suffix}`;
+      } else if (currencyMode === 'EGP') {
+        return `${formatNumber(egpMin)} – ${formatNumber(egpMax)} EGP${suffix}`;
+      } else {
+        return `${formatNumber(sarMin)}–${formatNumber(sarMax)} SAR (${formatNumber(egpMin)}–${formatNumber(egpMax)} EGP)${suffix}`;
+      }
+    }
+
+    function setCurrencyMode(mode) {
+      currencyMode = mode;
+      ['SAR', 'EGP', 'BOTH'].forEach(m => {
+        const btn = document.getElementById(`btn-curr-${m}`);
+        if (!btn) return;
+        if (m === mode) {
+          btn.className = 'px-3 py-1 text-xs font-bold rounded-lg transition-all bg-white text-slate-900 shadow-sm';
+        } else {
+          btn.className = 'px-3 py-1 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900';
+        }
+      });
+      recalculateAll();
+      updateStaticCardsCurrency();
+    }
+
+    function setDuration(months) {
+      stayDurationMonths = months;
+      document.getElementById('btn-dur-6').className = months === 6 
+        ? 'px-3 py-1 text-xs font-bold rounded-md transition bg-white text-slate-900 shadow-sm'
+        : 'px-3 py-1 text-xs font-bold rounded-md transition text-slate-600 hover:text-slate-900';
+      document.getElementById('btn-dur-12').className = months === 12 
+        ? 'px-3 py-1 text-xs font-bold rounded-md transition bg-white text-slate-900 shadow-sm'
+        : 'px-3 py-1 text-xs font-bold rounded-md transition text-slate-600 hover:text-slate-900';
+      document.getElementById('duration-toggle-text').innerText = `Séjour : ${months} Mois`;
+      recalculateAll();
+    }
+
+    function updateBudgetSlider(val) {
+      targetMonthlyBudgetSAR = parseInt(val);
+      document.getElementById('display-target-budget').innerText = formatMoney(targetMonthlyBudgetSAR);
+      recalculateAll();
+    }
+
+    // Toggle / Deselect Function: Clicking an active option toggles it to 'none'
+    function toggleCategoryOption(category, val) {
+      if (category === 'school') {
+        const nextVal = (selectedSchool === val && val !== 'none') ? 'none' : val;
+        updateSchool(nextVal);
+      } else if (category === 'housing') {
+        const nextVal = (selectedHousing === val && val !== 'none') ? 'none' : val;
+        updateHousing(nextVal);
+      } else if (category === 'arabic') {
+        const nextVal = (selectedArabic === val && val !== 'none') ? 'none' : val;
+        updateArabic(nextVal);
+      } else if (category === 'mobility') {
+        const nextVal = (selectedMobility === val && val !== 'none') ? 'none' : val;
+        updateMobility(nextVal);
+      } else if (category === 'food') {
+        const nextVal = (selectedFood === val && val !== 'none') ? 'none' : val;
+        updateFood(nextVal);
+      } else if (category === 'lifestyle') {
+        const nextVal = (selectedLifestyle === val && val !== 'none') ? 'none' : val;
+        updateLifestyle(nextVal);
+      } else if (category === 'help') {
+        const nextVal = (selectedHelp === val && val !== 'none') ? 'none' : val;
+        updateHelp(nextVal);
+      } else if (category === 'health') {
+        const nextVal = (selectedHealth === val && val !== 'none') ? 'none' : val;
+        updateHealth(nextVal);
+      }
+    }
+
+    function updateSchool(val) {
+      selectedSchool = val;
+      const radio = document.querySelector(`input[name="schoolOption"][value="${val}"]`);
+      if (radio) radio.checked = true;
+      updateCardHighlight('school', ['lfc', 'malvern', 'mes', 'none'], val);
+      renderCommuteCards();
+      recalculateAll();
+    }
+
+    function updateHousing(val) {
+      selectedHousing = val;
+      const radio = document.querySelector(`input[name="housingOption"][value="${val}"]`);
+      if (radio) radio.checked = true;
+      updateCardHighlight('house', ['std', 'lux', 'town', 'value', 'none'], val);
+      
+      // Sync active home key
+      if (val === 'std') activeHomeKey = 'mv_hydepark';
+      else if (val === 'lux') activeHomeKey = 'mivida';
+      else if (val === 'town') activeHomeKey = 'hydepark';
+      else if (val === 'value') activeHomeKey = 'rehab';
+
+      const homeSel = document.getElementById('activeHomeSelector');
+      if (homeSel) homeSel.value = activeHomeKey;
+      
+      const axisEl = document.getElementById('active-home-axis');
+      if (axisEl && MAP_LOCATIONS[activeHomeKey]) {
+        axisEl.innerText = val === 'none' 
+          ? `${MAP_LOCATIONS[activeHomeKey].axis} (Point de repère hors-budget)`
+          : MAP_LOCATIONS[activeHomeKey].axis;
+      }
+
+      renderCommuteCards();
+      panMapTo(activeHomeKey);
+      recalculateAll();
+    }
+
+    function onHomeSelectorChange(key) {
+      activeHomeKey = key;
+      document.getElementById('active-home-axis').innerText = MAP_LOCATIONS[key].axis;
+      renderCommuteCards();
+      panMapTo(key);
+    }
+
+    function updateArabic(val) {
+      selectedArabic = val;
+      const radio = document.querySelector(`input[name="arabicOption"][value="${val}"]`);
+      if (radio) radio.checked = true;
+      updateCardHighlight('arabic', ['home', 'inst', 'online', 'none'], val);
+      recalculateAll();
+    }
+
+    function updateMobility(val) {
+      selectedMobility = val;
+      const radio = document.querySelector(`input[name="mobilityOption"][value="${val}"]`);
+      if (radio) radio.checked = true;
+      updateCardHighlight('mob', ['car', 'uber', 'none'], val);
+      recalculateAll();
+    }
+
+    function updateFood(val) {
+      selectedFood = val;
+      const radio = document.querySelector(`input[name="foodOption"][value="${val}"]`);
+      if (radio) radio.checked = true;
+      updateCardHighlight('food', ['full', 'groceries', 'budget', 'none'], val);
+      recalculateAll();
+    }
+
+    function updateLifestyle(val) {
+      selectedLifestyle = val;
+      const radio = document.querySelector(`input[name="lifestyleOption"][value="${val}"]`);
+      if (radio) radio.checked = true;
+      updateCardHighlight('lifestyle', ['full', 'sports', 'gym', 'none'], val);
+      recalculateAll();
+    }
+
+    function updateHelp(val) {
+      selectedHelp = val;
+      const radio = document.querySelector(`input[name="helpOption"][value="${val}"]`);
+      if (radio) radio.checked = true;
+      updateCardHighlight('help', ['pt', 'ft', 'none'], val);
+      recalculateAll();
+    }
+
+    function updateHealth(val) {
+      selectedHealth = val;
+      const radio = document.querySelector(`input[name="healthOption"][value="${val}"]`);
+      if (radio) radio.checked = true;
+      updateCardHighlight('health', ['local', 'global', 'none'], val);
+      recalculateAll();
+    }
+
+    function updateCardHighlight(prefix, options, active) {
+      options.forEach(opt => {
+        const el = document.getElementById(`opt-${prefix}-${opt}`);
+        if (!el) return;
+        if (opt === active) {
+          el.classList.add('border-tealacc-500', 'bg-tealacc-50/40');
+          el.classList.remove('border-slate-200');
+        } else {
+          el.classList.remove('border-tealacc-500', 'bg-tealacc-50/40');
+          el.classList.add('border-slate-200');
+        }
+      });
+    }
+
+    function resetDefaults() {
+      targetMonthlyBudgetSAR = 15000;
+      document.getElementById('budgetRange').value = 15000;
+      document.getElementById('display-target-budget').innerText = formatMoney(15000);
+
+      updateSchool('lfc');
+      updateHousing('std');
+      updateArabic('home');
+      updateMobility('car');
+      updateFood('full');
+      updateLifestyle('full');
+      updateHelp('pt');
+      updateHealth('local');
+
+      renderCommuteCards();
+      recalculateAll();
+      updateStaticCardsCurrency();
+    }
+
+    // Update all descriptions & static cards across the page according to chosen currency
+    function updateStaticCardsCurrency() {
+      // 1. Hero text & Slider ticks
+      document.getElementById('hero-envelope-text').innerText = formatRange(15000, 20000, ' / Mois');
+      document.getElementById('display-target-budget').innerText = formatMoney(targetMonthlyBudgetSAR);
+
+      document.getElementById('slider-tick-12k').innerText = formatMoney(12000, true);
+      document.getElementById('slider-tick-15k').innerText = `${formatMoney(15000, true)} (Target)`;
+      document.getElementById('slider-tick-20k').innerText = `${formatMoney(20000, true)} (Upper Cap)`;
+      document.getElementById('slider-tick-25k').innerText = formatMoney(25000, true);
+
+      // 2. Customizer option descriptions
+      document.getElementById('desc-opt-school-lfc').innerText = `AEFE. ~€4,528/an par enfant (~${formatMoney(16500)}/an/enf). Bourses éligibles.`;
+      document.getElementById('desc-opt-school-malvern').innerText = `Curriculum britannique (KS1/KS2). ~${formatMoney(19318)}/an par enfant.`;
+      document.getElementById('desc-opt-school-mes').innerText = `Programme britannique / américain. ~${formatMoney(17800)}/an par enfant.`;
+
+      document.getElementById('desc-opt-house-std').innerText = `Mountain View Hyde Park. ${formatMoney(5682)}/m. Sécurité 24/7 et parcs.`;
+      document.getElementById('desc-opt-house-lux').innerText = `Emaar Mivida. ${formatMoney(7955)}/m. Finitions ultra-luxueuses.`;
+      document.getElementById('desc-opt-house-town').innerText = `Townhouse Hyde Park. ${formatMoney(10606)}/m. Jardin privatif enfants.`;
+      document.getElementById('desc-opt-house-value').innerText = `Al Rehab City 2. ${formatMoney(4166)}/m. Ville fermée proche LFC.`;
+
+      document.getElementById('desc-opt-arabic-home').innerText = `Fusha + Coran (8 & 10 ans) + dialecte parents. ${formatMoney(455)}/mois. 0 trajet.`;
+      document.getElementById('desc-opt-arabic-inst').innerText = `Classes intensives certifiantes. ${formatMoney(644)}/mois. Trajet en voiture.`;
+      document.getElementById('desc-opt-arabic-online').innerText = `Enseignement à distance flexible. ${formatMoney(265)}/mois.`;
+
+      document.getElementById('desc-opt-mob-car').innerText = `SUV Compact (MG/Toyota). Location + carburant mensuel = ${formatMoney(2500)}/mois.`;
+      document.getElementById('desc-opt-mob-uber').innerText = `Courses quotidiennes + bus pour les 2 enfants = ${formatMoney(1666)}/mois.`;
+
+      document.getElementById('desc-opt-food-full').innerText = `Courses Seoudi/Carrefour + 1 resto/sem = ${formatMoney(2613)}/mois.`;
+      document.getElementById('desc-opt-food-groceries').innerText = `Courses supermarché de qualité = ${formatMoney(1818)}/mois.`;
+      document.getElementById('desc-opt-food-budget').innerText = `Marchés primeurs & hypermarché = ${formatMoney(1212)}/mois.`;
+
+      document.getElementById('desc-opt-life-full').innerText = `PSG Football + Gold's Gym non-mixte = ${formatMoney(886)}/mois.`;
+      document.getElementById('desc-opt-life-sports').innerText = `Académies football & natation = ${formatMoney(545)}/mois.`;
+      document.getElementById('desc-opt-life-gym').innerText = `Gold's Gym Concord Plaza = ${formatMoney(341)}/mois.`;
+
+      document.getElementById('desc-opt-help-pt').innerText = `Ménage, linge, vaisselle (3j/sem). ${formatMoney(492)}/mois.`;
+      document.getElementById('desc-opt-help-ft').innerText = `5 jours/semaine, 8h/jour. Repas & entretien = ${formatMoney(985)}/mois.`;
+
+      document.getElementById('desc-opt-health-local').innerText = `Air Force Hosp, Al Salam, Cleopatra. ${formatMoney(606)}/mois amorti.`;
+      document.getElementById('desc-opt-health-global').innerText = `Évacuation internationale d'urgence incluse. ${formatMoney(1363)}/mois.`;
+
+      // 3. Explorer Compound Cards Prices (Property Finder 2026 Live Benchmarks)
+      document.getElementById('comp-price-mivida').innerText = formatRange(7200, 10200, '/m');
+      document.getElementById('comp-price-mv').innerText = formatRange(5300, 7200, '/m');
+      document.getElementById('comp-price-hyde').innerText = formatRange(5680, 8330, '/m');
+      document.getElementById('comp-price-palmhills').innerText = formatRange(5680, 8330, '/m');
+      const rehabEl = document.getElementById('comp-price-rehab');
+      if (rehabEl) rehabEl.innerText = formatRange(3800, 4900, '/m');
+
+      // 4. Explorer School Cards Prices
+      document.getElementById('school-perchild-lfc').innerText = `${formatMoney(16500)} / an / enfant`;
+      document.getElementById('school-annual-lfc').innerText = `${formatMoney(33000)} / an`;
+
+      document.getElementById('school-perchild-malvern').innerText = `${formatMoney(19300)} / an / enfant`;
+      document.getElementById('school-annual-malvern').innerText = `${formatMoney(38600)} / an`;
+
+      document.getElementById('school-perchild-mes').innerText = `${formatMoney(17800)} / an / enfant`;
+      document.getElementById('school-annual-mes').innerText = `${formatMoney(35600)} / an`;
+
+      // 5. Healthcare & Sports Explorer Cards
+      document.getElementById('health-annual-total').innerText = formatRange(5682, 8333, ' / an');
+      document.getElementById('sports-monthly-total').innerText = `${formatMoney(886)} / mois`;
+    }
+
+    function recalculateAll() {
+      // 1. Calculate Monthly in EGP
+      const monthlySchoolEGP = COSTS_EGP.school[selectedSchool] || 0;
+      const monthlyHousingEGP = COSTS_EGP.housing[selectedHousing] || 0;
+      const monthlyArabicEGP = COSTS_EGP.arabic[selectedArabic] || 0;
+      const monthlyMobilityEGP = COSTS_EGP.mobility[selectedMobility] || 0;
+      const monthlyFoodEGP = COSTS_EGP.food[selectedFood] || 0;
+      const monthlySportsEGP = COSTS_EGP.lifestyle[selectedLifestyle] || 0;
+      const monthlyHelpEGP = COSTS_EGP.help[selectedHelp] || 0;
+      const monthlyHealthEGP = COSTS_EGP.health[selectedHealth] || 0;
+      const monthlyUtilitiesEGP = selectedHousing === 'none' ? 0 : COSTS_EGP.utilities;
+
+      const totalMonthlyEGP = monthlySchoolEGP + monthlyHousingEGP + monthlyArabicEGP +
+                              monthlyMobilityEGP + monthlyHelpEGP + monthlyHealthEGP + 
+                              monthlyFoodEGP + monthlySportsEGP + monthlyUtilitiesEGP;
+
+      // In SAR
+      const monthlySchoolSAR = monthlySchoolEGP / FX.EGP;
+      const monthlyHousingSAR = monthlyHousingEGP / FX.EGP;
+      const monthlyArabicSAR = monthlyArabicEGP / FX.EGP;
+      const monthlyMobilitySAR = monthlyMobilityEGP / FX.EGP;
+      const monthlyHelpSAR = monthlyHelpEGP / FX.EGP;
+      const monthlyHealthSAR = monthlyHealthEGP / FX.EGP;
+      const monthlyFoodSAR = monthlyFoodEGP / FX.EGP;
+      const monthlySportsSAR = monthlySportsEGP / FX.EGP;
+      const monthlyUtilitiesSAR = monthlyUtilitiesEGP / FX.EGP;
+
+      const totalMonthlySAR = totalMonthlyEGP / FX.EGP;
+
+      // 2. Update Top Status & Card Displays
+      document.getElementById('pkg-total-monthly').innerText = formatMoney(totalMonthlySAR);
+      document.getElementById('pkg-total-sub').innerText = currencyMode === 'BOTH' ? 'Calcul tout-compris mensuel' : `Équivalent : ${formatMoney(totalMonthlySAR, false)}`;
+
+      // Mini stats
+      document.getElementById('stat-rent').innerText = formatMoney(monthlyHousingSAR, true);
+      document.getElementById('stat-school').innerText = formatMoney(monthlySchoolSAR, true);
+      document.getElementById('stat-arabic').innerText = formatMoney(monthlyArabicSAR, true);
+      document.getElementById('stat-mobility').innerText = formatMoney(monthlyMobilitySAR, true);
+
+      // Card headers
+      document.getElementById('card-cost-school').innerText = `${formatMoney(monthlySchoolSAR, true)} / mo`;
+      document.getElementById('card-cost-housing').innerText = `${formatMoney(monthlyHousingSAR, true)} / mo`;
+      document.getElementById('card-cost-arabic').innerText = `${formatMoney(monthlyArabicSAR, true)} / mo`;
+      document.getElementById('card-cost-mobility').innerText = `${formatMoney(monthlyMobilitySAR, true)} / mo`;
+      document.getElementById('card-cost-food').innerText = `${formatMoney(monthlyFoodSAR, true)} / mo`;
+      document.getElementById('card-cost-sports').innerText = `${formatMoney(monthlySportsSAR, true)} / mo`;
+      document.getElementById('card-cost-help').innerText = `${formatMoney(monthlyHelpSAR, true)} / mo`;
+      document.getElementById('card-cost-health').innerText = `${formatMoney(monthlyHealthSAR, true)} / mo`;
+
+      // Budget Progress & Pill
+      const utilPct = targetMonthlyBudgetSAR > 0 ? (totalMonthlySAR / targetMonthlyBudgetSAR) * 100 : 0;
+      const surplusSAR = targetMonthlyBudgetSAR - totalMonthlySAR;
+
+      document.getElementById('budget-util-pct').innerText = `${utilPct.toFixed(1)}%`;
+      const bar = document.getElementById('budget-progress-bar');
+      bar.style.width = `${Math.min(utilPct, 100)}%`;
+
+      const statusPill = document.getElementById('budget-status-pill');
+      const statusText = document.getElementById('budget-status-text');
+      const surplusVal = document.getElementById('pkg-surplus-val');
+
+      if (surplusSAR >= 0) {
+        bar.className = 'h-full bg-tealacc-500 rounded-full transition-all duration-300';
+        statusPill.className = 'px-3 py-1.5 rounded-xl font-bold text-xs flex items-center space-x-1.5 bg-emerald-100 text-emerald-800 border border-emerald-200';
+        statusText.innerText = 'Dans le Budget';
+        surplusVal.className = 'text-emerald-700 font-bold';
+        surplusVal.innerText = `+${formatMoney(surplusSAR)}`;
+      } else {
+        bar.className = 'h-full bg-rose-500 rounded-full transition-all duration-300';
+        statusPill.className = 'px-3 py-1.5 rounded-xl font-bold text-xs flex items-center space-x-1.5 bg-rose-100 text-rose-800 border border-rose-200';
+        statusText.innerText = 'Dépassement';
+        surplusVal.className = 'text-rose-700 font-bold';
+        surplusVal.innerText = `-${formatMoney(Math.abs(surplusSAR))}`;
+      }
+
+      // Safe percentage calculation
+      const safeTotal = totalMonthlySAR > 0 ? totalMonthlySAR : 1;
+
+      // 3. Update Table Breakdown
+      document.getElementById('tbl-val-housing').innerText = formatMoney(monthlyHousingSAR);
+      document.getElementById('tbl-pct-housing').innerText = totalMonthlySAR > 0 ? `${((monthlyHousingSAR / safeTotal) * 100).toFixed(1)}%` : '0.0%';
+      document.getElementById('tbl-desc-housing').innerText = selectedHousing === 'std' 
+        ? '3 Ch. Meublé (Mountain View Hyde Park)' 
+        : (selectedHousing === 'lux' ? 'Penthouse Standing (Mivida Ultra-Lux)' 
+        : (selectedHousing === 'town' ? 'Townhouse avec Jardin Privatif' 
+        : (selectedHousing === 'value' ? 'Al Rehab 2 (3 Ch. Meublé)' : '❌ Aucun loyer / Hébergement externe')));
+
+      document.getElementById('tbl-val-school').innerText = formatMoney(monthlySchoolSAR);
+      document.getElementById('tbl-pct-school').innerText = totalMonthlySAR > 0 ? `${((monthlySchoolSAR / safeTotal) * 100).toFixed(1)}%` : '0.0%';
+      document.getElementById('tbl-desc-school').innerText = selectedSchool === 'lfc' 
+        ? 'Lycée Français du Caire (2 Enfants)' 
+        : (selectedSchool === 'malvern' ? 'Malvern College Egypt (2 Enfants)' 
+        : (selectedSchool === 'mes' ? 'Modern English School (MES)' : '❌ Aucune école locale (Financée à part)'));
+
+      document.getElementById('tbl-val-arabic').innerText = formatMoney(monthlyArabicSAR);
+      document.getElementById('tbl-pct-arabic').innerText = totalMonthlySAR > 0 ? `${((monthlyArabicSAR / safeTotal) * 100).toFixed(1)}%` : '0.0%';
+      document.getElementById('tbl-desc-arabic').innerText = selectedArabic === 'home' 
+        ? 'Tuteur Privé à Domicile (3x/sem)' 
+        : (selectedArabic === 'inst' ? 'Institut Spécialisé Présentiel' 
+        : (selectedArabic === 'online' ? 'Enseignement en ligne 1-on-1' : '❌ Aucun cours d'arabe'));
+
+      document.getElementById('tbl-val-mobility').innerText = formatMoney(monthlyMobilitySAR);
+      document.getElementById('tbl-pct-mobility').innerText = totalMonthlySAR > 0 ? `${((monthlyMobilitySAR / safeTotal) * 100).toFixed(1)}%` : '0.0%';
+      document.getElementById('tbl-desc-mobility').innerText = selectedMobility === 'car' 
+        ? 'Voiture de Location + Essence' 
+        : (selectedMobility === 'uber' ? 'Uber / Careem + Bus Scolaire' : '❌ Aucun transport payant (Autonome)');
+
+      document.getElementById('tbl-val-food').innerText = formatMoney(monthlyFoodSAR);
+      document.getElementById('tbl-pct-food').innerText = totalMonthlySAR > 0 ? `${((monthlyFoodSAR / safeTotal) * 100).toFixed(1)}%` : '0.0%';
+
+      document.getElementById('tbl-val-sports').innerText = formatMoney(monthlySportsSAR);
+      document.getElementById('tbl-pct-sports').innerText = totalMonthlySAR > 0 ? `${((monthlySportsSAR / safeTotal) * 100).toFixed(1)}%` : '0.0%';
+
+      document.getElementById('tbl-val-help').innerText = formatMoney(monthlyHelpSAR + monthlyUtilitiesSAR);
+      document.getElementById('tbl-pct-help').innerText = totalMonthlySAR > 0 ? `${(((monthlyHelpSAR + monthlyUtilitiesSAR) / safeTotal) * 100).toFixed(1)}%` : '0.0%';
+      document.getElementById('tbl-desc-help').innerText = selectedHelp === 'pt' 
+        ? 'Ménage partiel (3j/sem) + Électricité & Fibre' 
+        : (selectedHelp === 'ft' ? 'Gouvernante plein temps + Charges' : (selectedHousing === 'none' ? '❌ Aucune charge' : 'Électricité AC & Fibre Wi-Fi'));
+
+      document.getElementById('tbl-val-health').innerText = formatMoney(monthlyHealthSAR);
+      document.getElementById('tbl-pct-health').innerText = totalMonthlySAR > 0 ? `${((monthlyHealthSAR / safeTotal) * 100).toFixed(1)}%` : '0.0%';
+      document.getElementById('tbl-desc-health').innerText = selectedHealth === 'local' 
+        ? 'Réseau Local Privé (Air Force Hospital)' 
+        : (selectedHealth === 'global' ? 'Police Expat Internationale' : '❌ Aucune assurance locale');
+
+      document.getElementById('tbl-grand-total').innerText = formatMoney(totalMonthlySAR);
+      document.getElementById('tbl-grand-pct').innerText = totalMonthlySAR > 0 ? '100.0%' : '0.0%';
+
+      // 4. One-Time Setup Costs (Departing Riyadh RUH ➔ CAI)
+      const flightSAR = ONE_TIME_EGP.flights / FX.EGP;
+      const depositSAR = (monthlyHousingEGP * 2) / FX.EGP;
+      const brokerSAR = monthlyHousingEGP / FX.EGP;
+      const regFeeEGP = ONE_TIME_EGP.registration[selectedSchool] || 0;
+      const schoolAdminSAR = (regFeeEGP + (selectedSchool === 'none' ? 10000 : ONE_TIME_EGP.visas)) / FX.EGP;
+      const totalOneTimeSAR = flightSAR + depositSAR + brokerSAR + schoolAdminSAR;
+
+      document.getElementById('onetime-flights').innerText = formatMoney(flightSAR);
+      document.getElementById('onetime-deposit').innerText = monthlyHousingEGP === 0 ? '0 SAR (Aucun)' : formatMoney(depositSAR);
+      document.getElementById('onetime-broker').innerText = monthlyHousingEGP === 0 ? '0 SAR (Aucun)' : formatMoney(brokerSAR);
+      document.getElementById('onetime-visas').innerText = formatMoney(schoolAdminSAR);
+      document.getElementById('onetime-total-display').innerText = formatMoney(totalOneTimeSAR);
+
+      // Total Stay Outlay
+      const grandTotalStaySAR = (totalMonthlySAR * stayDurationMonths) + totalOneTimeSAR;
+      document.getElementById('total-stay-grand').innerText = formatMoney(grandTotalStaySAR);
+
+      // 5. Update Center Chart
+      if (currencyMode === 'SAR') {
+        document.getElementById('chart-center-val').innerText = formatNumber(totalMonthlySAR);
+        document.getElementById('chart-center-curr').innerText = 'SAR / mo';
+      } else if (currencyMode === 'EGP') {
+        document.getElementById('chart-center-val').innerText = formatNumber(totalMonthlyEGP);
+        document.getElementById('chart-center-curr').innerText = 'EGP / mo';
+      } else {
+        document.getElementById('chart-center-val').innerText = `${formatNumber(totalMonthlySAR)}`;
+        document.getElementById('chart-center-curr').innerText = `SAR (${formatNumber(totalMonthlyEGP)} EGP)`;
+      }
+
+      updateChartData([
+        monthlyHousingSAR,
+        monthlySchoolSAR,
+        monthlyArabicSAR,
+        monthlyMobilitySAR,
+        monthlyFoodSAR,
+        monthlySportsSAR,
+        monthlyHelpSAR + monthlyUtilitiesSAR,
+        monthlyHealthSAR
+      ]);
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('budgetChart').getContext('2d');
+      budgetChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Logement', 'Scolarité', 'Arabe', 'Mobilité', 'Nourriture', 'Sports & Gym', 'Aide & Charges', 'Santé Takaful'],
+          datasets: [{
+            data: [5682, 3181, 455, 2500, 2613, 886, 946, 606],
+            backgroundColor: [
+              '#0D9488',
+              '#3B82F6',
+              '#14B8A6',
+              '#F59E0B',
+              '#10B981',
+              '#8B5CF6',
+              '#EC4899',
+              '#64748B'
+            ],
+            borderWidth: 2,
+            borderColor: '#FFFFFF',
+            hoverOffset: 6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '72%',
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const valSAR = context.raw;
+                  return ` ${context.label}: ${formatMoney(valSAR)}`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function updateChartData(newDataSAR) {
+      if (!budgetChartInstance) return;
+      budgetChartInstance.data.datasets[0].data = newDataSAR;
+      budgetChartInstance.update();
+    }
+
+    // ==========================================
+    // Clean Leaflet Map Engine & Distance Matrix
+    // ==========================================
+    let currentMapViewMode = 'satellite'; // 'satellite', 'osm', 'vector'
+    let currentTileLayer = null;
+
+    function initMap() {
+      leafletMap = L.map('commuteMap').setView([30.024, 31.458], 12);
+
+      // Default to High Definition Satellite View
+      setLeafletTileLayer('satellite');
+
+      for (const [key, loc] of Object.entries(MAP_LOCATIONS)) {
+        const customIcon = L.divIcon({
+          className: 'clean-poi-wrapper',
+          html: `<div class="custom-poi-marker" style="background-color: ${loc.color}; width: 28px; height: 28px;">
+                   <span>${loc.iconChar}</span>
+                 </div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
+        });
+
+        const marker = L.marker([loc.lat, loc.lng], { icon: customIcon }).addTo(leafletMap);
+        
+        marker.bindPopup(`
+          <div style="font-family:'Plus Jakarta Sans',sans-serif; padding:2px;">
+            <span style="font-size:10px; font-weight:800; text-transform:uppercase; color:${loc.color};">${loc.badge}</span>
+            <div style="font-size:13px; font-weight:700; color:#0f172a; margin-top:2px;">${loc.name}</div>
+            <div style="font-size:11px; color:#64748b; margin-top:2px;">Axe : ${loc.axis}</div>
+          </div>
+        `);
+        
+        mapMarkers[key] = marker;
+      }
+
+      const selectA = document.getElementById('customSelectA');
+      const selectB = document.getElementById('customSelectB');
+      if (selectA && selectB) {
+        selectA.innerHTML = '';
+        selectB.innerHTML = '';
+        for (const [key, loc] of Object.entries(MAP_LOCATIONS)) {
+          selectA.add(new Option(loc.name, key));
+          selectB.add(new Option(loc.name, key));
+        }
+        selectA.value = 'mv_hydepark';
+        selectB.value = 'lfc';
+      }
+
+      renderCommuteCards();
+      renderVectorMap();
+    }
+
+    function setLeafletTileLayer(type) {
+      if (currentTileLayer && leafletMap) {
+        leafletMap.removeLayer(currentTileLayer);
+      }
+      if (type === 'satellite') {
+        // High-definition Hybrid Satellite Imagery (Google Hybrid without 403 blocks)
+        currentTileLayer = L.tileLayer('https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}', {
+          maxZoom: 20,
+          attribution: 'Imagerie Satellite &copy; Google / CNES / Airbus'
+        });
+      } else {
+        // Standard OpenStreetMap street plan
+        currentTileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          maxZoom: 18,
+          attribution: '&copy; OpenStreetMap contributors'
+        });
+      }
+      currentTileLayer.addTo(leafletMap);
+    }
+
+    // Map View Switcher: Satellite vs OSM vs Offline Vector
+    function switchMapView(mode) {
+      currentMapViewMode = mode;
+      const osmContainer = document.getElementById('commuteMap');
+      const vectorContainer = document.getElementById('offlineVectorMap');
+      const btnSat = document.getElementById('btn-map-sat');
+      const btnOsm = document.getElementById('btn-map-osm');
+      const btnVector = document.getElementById('btn-map-vector');
+      const footer = document.getElementById('map-provider-footer');
+
+      const activeBtnClass = 'px-2.5 sm:px-3 py-1 text-xs font-bold rounded-lg transition-all bg-white text-slate-900 shadow-sm flex items-center';
+      const inactiveBtnClass = 'px-2.5 sm:px-3 py-1 text-xs font-bold rounded-lg transition-all text-slate-600 hover:text-slate-900 flex items-center';
+
+      if (mode === 'satellite') {
+        osmContainer.classList.remove('hidden');
+        vectorContainer.classList.add('hidden');
+
+        btnSat.className = activeBtnClass;
+        btnOsm.className = inactiveBtnClass;
+        btnVector.className = inactiveBtnClass;
+        footer.innerText = 'Imagerie Satellite Hybride HD • Nouveau Caire';
+
+        setLeafletTileLayer('satellite');
+        if (leafletMap) {
+          setTimeout(() => leafletMap.invalidateSize(), 100);
+        }
+      } else if (mode === 'osm') {
+        osmContainer.classList.remove('hidden');
+        vectorContainer.classList.add('hidden');
+
+        btnOsm.className = activeBtnClass;
+        btnSat.className = inactiveBtnClass;
+        btnVector.className = inactiveBtnClass;
+        footer.innerText = 'Plan des Rues (OpenStreetMap) • Nouveau Caire';
+
+        setLeafletTileLayer('osm');
+        if (leafletMap) {
+          setTimeout(() => leafletMap.invalidateSize(), 100);
+        }
+      } else { // 'vector'
+        osmContainer.classList.add('hidden');
+        vectorContainer.classList.remove('hidden');
+
+        btnVector.className = activeBtnClass;
+        btnSat.className = inactiveBtnClass;
+        btnOsm.className = inactiveBtnClass;
+        footer.innerText = 'Carte Schématique Vectorielle (100% Hors-Ligne)';
+
+        renderVectorMap();
+      }
+    }
+
+    // 100% Offline Vector SVG Map Generator for New Cairo
+    function getSvgCoords(lat, lng) {
+      const minLat = 29.980, maxLat = 30.070;
+      const minLng = 31.390, maxLng = 31.540;
+      const x = Math.round(((lng - minLng) / (maxLng - minLng)) * 740 + 30);
+      const y = Math.round(((maxLat - lat) / (maxLat - minLat)) * 440 + 30);
+      return { x, y };
+    }
+
+    function renderVectorMap() {
+      const svg = document.getElementById('vectorMapSvg');
+      if (!svg) return;
+
+      // Base Grid & Major Road Axes
+      let svgHtml = `
+        <defs>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="1"/>
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+
+        <!-- Road Network: Ring Road West -->
+        <path d="M 85 490 Q 110 300 90 30" fill="none" stroke="#334155" stroke-width="8" stroke-linecap="round"/>
+        <text x="50" y="260" fill="#64748b" font-size="10" font-weight="700" transform="rotate(-85 50 260)">RING ROAD (LE PÉRIPHÉRIQUE)</text>
+
+        <!-- Suez Road North -->
+        <path d="M 90 40 L 730 40" fill="none" stroke="#334155" stroke-width="7" stroke-linecap="round"/>
+        <text x="220" y="32" fill="#64748b" font-size="10" font-weight="700">ROUTE DE SUEZ (AXE NORD)</text>
+
+        <!-- Road 90 North -->
+        <path d="M 105 240 Q 300 245 450 180 T 680 140" fill="none" stroke="#475569" stroke-width="6" stroke-linecap="round"/>
+        <text x="240" y="215" fill="#94a3b8" font-size="10" font-weight="700">RUE 90 NORD</text>
+
+        <!-- Road 90 South -->
+        <path d="M 105 260 Q 280 280 430 330 T 650 380" fill="none" stroke="#0D9488" stroke-width="6" stroke-linecap="round" stroke-opacity="0.8"/>
+        <text x="260" y="315" fill="#14b8a6" font-size="10" font-weight="800">RUE 90 SUD (GOLDEN SQUARE)</text>
+
+        <!-- Mohamed Naguib Axis -->
+        <path d="M 440 40 L 440 480" fill="none" stroke="#475569" stroke-width="6" stroke-linecap="round"/>
+        <text x="445" y="110" fill="#94a3b8" font-size="10" font-weight="700" transform="rotate(90 445 110)">AXE MOHAMED NAGUIB</text>
+
+        <!-- Middle Ring Road East -->
+        <path d="M 680 40 Q 720 250 620 480" fill="none" stroke="#334155" stroke-width="7" stroke-linecap="round"/>
+        <text x="690" y="280" fill="#64748b" font-size="10" font-weight="700" transform="rotate(80 690 280)">MIDDLE RING ROAD (EL AWSATI)</text>
+      `;
+
+      // Draw all POIs
+      for (const [key, loc] of Object.entries(MAP_LOCATIONS)) {
+        const { x, y } = getSvgCoords(loc.lat, loc.lng);
+        const isCurrentHome = (key === activeHomeKey);
+        const radius = isCurrentHome ? 16 : 13;
+        const ring = isCurrentHome ? `<circle cx="${x}" cy="${y}" r="22" fill="none" stroke="#10b981" stroke-width="2" stroke-dasharray="4 4" class="animate-spin" />` : '';
+
+        svgHtml += `
+          <g class="cursor-pointer group" onclick="onVectorPoiClick('${key}')">
+            ${ring}
+            <circle cx="${x}" cy="${y}" r="${radius}" fill="${loc.color}" stroke="#ffffff" stroke-width="2.5" filter="drop-shadow(0px 3px 6px rgba(0,0,0,0.5))"/>
+            <text x="${x}" y="${y + 4}" text-anchor="middle" font-size="${isCurrentHome ? 13 : 11}" pointer-events="none">${loc.iconChar}</text>
+            <rect x="${x - 45}" y="${y + 16}" width="90" height="18" rx="5" fill="#0f172a" fill-opacity="0.85" stroke="${loc.color}" stroke-width="1"/>
+            <text x="${x}" y="${y + 28}" text-anchor="middle" fill="#f8fafc" font-size="9" font-family="'Plus Jakarta Sans',sans-serif" font-weight="700" pointer-events="none">${loc.name.split(' (')[0]}</text>
+          </g>
+        `;
+      }
+
+      svg.innerHTML = svgHtml;
+    }
+
+    function onVectorPoiClick(key) {
+      const loc = MAP_LOCATIONS[key];
+      if (!loc) return;
+
+      if (loc.category === 'home') {
+        activeHomeKey = key;
+        document.getElementById('activeHomeSelector').value = key;
+        document.getElementById('active-home-axis').innerText = loc.axis;
+        renderCommuteCards();
+        renderVectorMap();
+      } else {
+        panMapTo(key);
+      }
+    }
+
+    function haversineDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    function getCommuteMetrics(originKey, destKey) {
+      const locA = MAP_LOCATIONS[originKey];
+      const locB = MAP_LOCATIONS[destKey];
+      if (!locA || !locB) return { dist: 0, offPeak: 0, peak: 0 };
+
+      if (originKey === destKey) {
+        return { dist: 0, offPeak: 0, peak: 0 };
+      }
+
+      const directKm = haversineDistance(locA.lat, locA.lng, locB.lat, locB.lng);
+      const roadKm = Math.max(0.8, directKm * 1.28);
+      const offPeakMinutes = Math.round((roadKm / 48) * 60 + 2);
+      const peakMinutes = Math.round((roadKm / 28) * 60 + 5);
+
+      return {
+        dist: roadKm.toFixed(1),
+        offPeak: offPeakMinutes,
+        peak: peakMinutes
+      };
+    }
+
+    function renderCommuteCards() {
+      const container = document.getElementById('commuteCardsContainer');
+      if (!container) return;
+
+      const originKey = activeHomeKey;
+      const home = MAP_LOCATIONS[originKey];
+
+      const destinations = [];
+      
+      // Add School destination if an actual school is selected
+      if (selectedSchool !== 'none' && MAP_LOCATIONS[selectedSchool]) {
+        destinations.push({ key: selectedSchool, tag: 'École Sélectionnée', isHighlight: true });
+      }
+
+      // Add Sports / Gym if lifestyle is active
+      if (selectedLifestyle !== 'none' && selectedLifestyle !== 'sports') {
+        destinations.push({ key: 'golds_concord', tag: 'Fitness / Gym Non-Mixte', isHighlight: false });
+      }
+      if (selectedLifestyle !== 'none' && selectedLifestyle !== 'gym') {
+        destinations.push({ key: 'psg_academy', tag: 'Sport Enfants (PSG / Smash)', isHighlight: false });
+      }
+
+      // Add Healthcare if active
+      if (selectedHealth !== 'none') {
+        destinations.push({ key: 'airforce_hosp', tag: 'Urgences / Santé (Hôpital)', isHighlight: false });
+      }
+
+      // Standard POIs
+      destinations.push(
+        { key: 'seoudi_waterway', tag: 'Supermarché Seoudi & Restos', isHighlight: false },
+        { key: 'sharbatly_mosque', tag: 'Grande Mosquée (Jumua)', isHighlight: false },
+        { key: 'cfc_carrefour', tag: 'Centre Commercial (CFC Mall)', isHighlight: false }
+      );
+
+      let html = '';
+
+      destinations.forEach(item => {
+        const dest = MAP_LOCATIONS[item.key];
+        if (!dest) return;
+
+        const metrics = getCommuteMetrics(originKey, item.key);
+        const cardBg = item.isHighlight 
+          ? 'bg-blue-50/70 border-blue-200' 
+          : 'bg-white border-slate-200';
+
+        html += `
+          <div class="p-3 rounded-2xl border ${cardBg} shadow-xs hover:border-tealacc-500 transition duration-150 group">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2">
+                <span class="w-6 h-6 rounded-lg flex items-center justify-center text-xs font-bold" style="background-color: ${dest.color}20; color: ${dest.color};">
+                  ${dest.iconChar}
+                </span>
+                <div>
+                  <div class="flex items-center space-x-1.5">
+                    <span class="font-bold text-xs text-slate-900 group-hover:text-tealacc-600 transition">${dest.name}</span>
+                    <span class="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase tracking-wider" style="background-color: ${dest.color}15; color: ${dest.color};">${item.tag}</span>
+                  </div>
+                  <span class="text-[10px] text-slate-400 block">${dest.axis}</span>
+                </div>
+              </div>
+
+              <div class="text-right flex items-center space-x-2">
+                <div class="text-right">
+                  <span class="text-xs font-extrabold text-slate-900 block leading-tight">${metrics.dist} km</span>
+                  <span class="text-[10px] text-slate-400">Distance</span>
+                </div>
+                <div class="pl-2 border-l border-slate-100 text-right">
+                  <span class="text-xs font-black text-emerald-700 block leading-tight">${metrics.offPeak} min</span>
+                  <span class="text-[9px] font-bold text-amber-700">~${metrics.peak}m pointe</span>
+                </div>
+                <button onclick="panMapTo('${item.key}')" title="Centrer sur la carte" class="p-1 rounded-lg text-slate-400 hover:text-tealacc-600 hover:bg-slate-100 transition">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+    }
+
+    function panMapTo(key) {
+      let targetKey = key === 'activeHome' ? activeHomeKey : key;
+      const loc = MAP_LOCATIONS[targetKey];
+      if (!loc) return;
+
+      if (currentMapViewMode === 'satellite' || currentMapViewMode === 'osm') {
+        if (leafletMap) {
+          leafletMap.flyTo([loc.lat, loc.lng], 14, { duration: 0.8 });
+          if (mapMarkers[targetKey]) {
+            mapMarkers[targetKey].openPopup();
+          }
+        }
+      } else {
+        renderVectorMap();
+      }
+    }
+
+    function toggleCustomAtoB() {
+      const panel = document.getElementById('custom-atob-panel');
+      const ind = document.getElementById('custom-toggle-indicator');
+      if (panel.classList.contains('hidden')) {
+        panel.classList.remove('hidden');
+        ind.innerText = '[ - Fermer ]';
+        calculateCustomAtoB();
+      } else {
+        panel.classList.add('hidden');
+        ind.innerText = '[ + Ouvrir ]';
+      }
+    }
+
+    function calculateCustomAtoB() {
+      const a = document.getElementById('customSelectA').value;
+      const b = document.getElementById('customSelectB').value;
+      const locA = MAP_LOCATIONS[a];
+      const locB = MAP_LOCATIONS[b];
+      if (!locA || !locB) return;
+
+      const m = getCommuteMetrics(a, b);
+      document.getElementById('custom-result-name').innerText = `${locA.name.split(' (')[0]} ➔ ${locB.name.split(' (')[0]}`;
+      document.getElementById('custom-result-metrics').innerText = `${m.dist} km • ${m.offPeak} min (fluide) / ${m.peak} min (pointe)`;
+    }
+
+    // Initialize on DOM Ready
+    window.addEventListener('DOMContentLoaded', () => {
+      initChart();
+      initMap();
+      recalculateAll();
+      updateStaticCardsCurrency();
+    });
+  </script>
+</body>
+</html>
