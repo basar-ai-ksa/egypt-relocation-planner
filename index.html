@@ -60,6 +60,17 @@
       border-radius: 1.25rem;
       z-index: 10;
     }
+    @media (max-width: 640px) {
+      #commuteMap {
+        height: 380px;
+      }
+    }
+    .select-option {
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      cursor: pointer;
+      touch-action: manipulation;
+    }
     .custom-poi-marker {
       display: flex;
       align-items: center;
@@ -2061,7 +2072,7 @@
       document.getElementById('tbl-desc-arabic').innerText = selectedArabic === 'home' 
         ? 'Tuteur Privé à Domicile (3x/sem)' 
         : (selectedArabic === 'inst' ? 'Institut Spécialisé Présentiel' 
-        : (selectedArabic === 'online' ? 'Enseignement en ligne 1-on-1' : '❌ Aucun cours d'arabe'));
+        : (selectedArabic === 'online' ? 'Enseignement en ligne 1-on-1' : "❌ Aucun cours d'arabe"));
 
       document.getElementById('tbl-val-mobility').innerText = formatMoney(monthlyMobilitySAR);
       document.getElementById('tbl-pct-mobility').innerText = totalMonthlySAR > 0 ? `${((monthlyMobilitySAR / safeTotal) * 100).toFixed(1)}%` : '0.0%';
@@ -2232,6 +2243,10 @@
 
       renderCommuteCards();
       renderVectorMap();
+
+      // Ensure proper sizing on mobile displays & fast rendering
+      setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 250);
+      setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 800);
     }
 
     function setLeafletTileLayer(type) {
